@@ -5,8 +5,8 @@ After=network.target unbound.service
 [Service]
 Type=oneshot
 
-ExecStart=docker-compose -f /usr/local/src/docker-containers/web/unbound/docker-compose.yaml start ad_blocking
-ExecStartPost=docker-compose -f /usr/local/src/docker-containers/web/unbound/docker-compose.yaml restart unbound
+ExecStart=docker-compose -f /usr/local/src/docker-containers/unbound/docker-compose.yaml start ad_blocking
+ExecStartPost=docker-compose -f /usr/local/src/docker-containers/unbound/docker-compose.yaml restart unbound
 
 # filesystem access
 ProtectSystem=strict
