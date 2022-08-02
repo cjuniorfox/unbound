@@ -1,0 +1,29 @@
+version: '3.5'
+volumes:
+  certificates:
+    name: certbot-certificates
+  unbound-conf:
+    name: unbound-conf
+services:
+  unbound:
+    container_name: unbound
+    network_mode: host
+    restart: always
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "853:853/tcp"
+      - "853:853/udp"
+    volumes:
+      - unbound-conf:/etc/unbound/unbound.conf.d/
+      - certificates:/etc/certificates/
+    build:
+      context: ./
+      dockerfile: Dockerfile
+  ad_blocking:
+    container_name: ad_blocking
+    image: alpine
+    volumes:
+      - ./ad-blocking.sh:/ad-blocking.sh
+      - unbound-conf:/etc/unbound/unbound.conf.d/
+    command: sh -c '/sbin/apk add curl && sh /ad-blocking.sh'
