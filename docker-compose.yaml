@@ -6,14 +6,13 @@ volumes:
     name: unbound-conf
 services:
   unbound:
-    container_name: unbound
-    network_mode: host
+    container_name: unbound:edge
     restart: always
     ports:
       - "53:53/tcp"
       - "53:53/udp"
-      - "853:853/tcp"
       - "853:853/udp"
+      - "853:853/tcp"
     volumes:
       - unbound-conf:/etc/unbound/unbound.conf.d/
       - certificates:/etc/certificates/
