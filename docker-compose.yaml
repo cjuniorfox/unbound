@@ -15,4 +15,7 @@ services:
       - "853:853/tcp"
     volumes:
       - certificates:/etc/certificates/
-    image: cjuniorfox/unbound
+      - ./unbound.conf:/etc/unbound/unbound.conf.d/unbound.conf
+    build:
+      context: .
+
