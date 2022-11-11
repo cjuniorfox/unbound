@@ -1,10 +1,23 @@
 version: '3.5'
-volumes:
-  certificates:
-    name: certbot-certificates
-  unbound-conf:
-    name: unbound-conf
 services:
+  dhcpd_to_unbound:
+    restart: always
+    build:
+      context: ./dhcpd_to_unbound
+    volumes:
+      - dhcp:/data
+      - unbound-conf:/unbound.conf.d/
+    environment:
+      DHCPD_LEASES: "/data/dhcpd.leases"
+      LOCALDOMAIN: "home.lan"
+  dhcpd:
+    restart: always
+    build:
+      context: ./dhcpd
+    network_mode: "host"
+    volumes:
+      - dhcp:/data
+    command: "br0"
   unbound:
     container_name: unbound
     restart: always
@@ -15,7 +28,14 @@ services:
       - "853:853/tcp"
     volumes:
       - certificates:/etc/certificates/
-      - ./unbound.conf:/etc/unbound/unbound.conf.d/unbound.conf
+      - unbound-conf:/etc/unbound/unbound.conf.d/
     build:
-      context: .
-
+      context: ./unbound
+volumes:
+  certificates:
+    name: certificates
+    external: true
+  unbound-conf:
+    name: unbound-conf
+  dhcp:
+    name: dhcp
