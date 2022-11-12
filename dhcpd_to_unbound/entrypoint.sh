@@ -1,5 +1,5 @@
 #!/bin/ash
-DYNAMIC_CONF="/unbound.conf.d/dynamic.conf"
+DYNAMIC_CONF="/unbound.conf.d/dhcpd.conf"
 echo "Starting DHCPD to Unbound"
 echo "DHCP lease: ${DHCPD_LEASES}"
 echo "Localdomain: ${LOCALDOMAIN}"
