@@ -9,7 +9,7 @@ services:
       - unbound-conf:/unbound.conf.d/
     environment:
       DHCPD_LEASES: "/data/dhcpd.leases"
-      LOCALDOMAIN: "home.lan"
+      LOCALDOMAIN: "juniorfox.net"
   dhcpd:
     restart: always
     build:
@@ -38,4 +38,4 @@ volumes:
   unbound-conf:
     name: unbound-conf
   dhcp:
-    name: dhcp
+    name: unbound-dhcp
