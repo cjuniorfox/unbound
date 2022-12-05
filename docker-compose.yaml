@@ -21,11 +21,12 @@ services:
   unbound:
     container_name: unbound
     restart: always
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "853:853/udp"
-      - "853:853/tcp"
+    network_mode: "host"
+#    ports:
+#      - "53:53/tcp"
+#      - "53:53/udp"
+#      - "853:853/udp"
+#      - "853:853/tcp"
     volumes:
       - certificates:/etc/certificates/
       - unbound-conf:/etc/unbound/unbound.conf.d/
