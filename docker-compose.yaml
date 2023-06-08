@@ -1,22 +1,12 @@
 version: '3.5'
 services:
-#  dhcpd_to_unbound:
-#    restart: always
-#    build:
-#      context: ./dhcpd_to_unbound
-#    volumes:
-#      - dhcp:/data
-#      - unbound-conf:/unbound.conf.d/
-#    environment:
-#      DHCPD_LEASES: "/data/dhcpd.leases"
-#      LOCALDOMAIN: "juniorfox.net"
   dhcpd:
     build:
-      context: ./dhcpd
+      context: ./dhcp
     restart: always
     network_mode: "host"
     volumes:
-      - dhcp:/data
+      - dhcp:/dhcpd/
     command: "br0"
   unbound:
     container_name: unbound
@@ -32,7 +22,7 @@ services:
     volumes:
       - dhcp:/dhcpd/
       - certificates:/etc/certificates/
-      - unbound-conf:/etc/unbound/unbound.conf.d/
+      - ./unbound-conf:/unbound-conf
     build:
       context: ./unbound
 volumes:
