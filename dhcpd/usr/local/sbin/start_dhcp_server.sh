@@ -1,8 +1,13 @@
 #!/bin/ash
 dhcpd_config_file=$1
+dhcpd_leases_file=$2
 if [[ -z "$dhcpd_config_file" ]]; then
-	echo -e "Please, declare your lease file after command.\nUsage start_dhcpd.sh /tmp/dhcpd.conf"
+	echo -e "Please, declare your config file after command.\nUsage start_dhcpd.sh /tmp/dhcpd.conf /dhcpd/dhcpd.leases"
 	exit 1
+fi
+if [[ -z "$dhcpd_leases_file" ]]; then
+	echo -e "Please, declare your lease file after command.\nUsage start_dhcpd.sh /tmp/dhcpd.conf /dhcpd/dhcpd.leases"
+	exit 1 
 fi
 if [[ -z "$DOMAIN" ]]; then
 	DOMAIN="local"
@@ -50,4 +55,5 @@ $OTHER_SETTINGS
 EOF
 cat $dhcpd_config_file
 echo -e "\nStarting DHCPd server\n"
-dhcpd -cf $dhcpd_config_file -f -d --no-pid -lf /tmp/dhcpd.leases -user dhcpd -group dhcpd
+touch $dhcpd_leases_file
+dhcpd -cf $dhcpd_config_file -f -d --no-pid -lf $dhcpd_leases_file -user dhcpd -group dhcpd $IFNAME
