@@ -55,5 +55,4 @@ $OTHER_SETTINGS
 EOF
 cat $dhcpd_config_file
 echo -e "\nStarting DHCPd server\n"
-touch $dhcpd_leases_file
 dhcpd -cf $dhcpd_config_file -f -d --no-pid -lf $dhcpd_leases_file -user dhcpd -group dhcpd $IFNAME

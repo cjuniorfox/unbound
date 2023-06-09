@@ -6,6 +6,8 @@ RUN	apk add --update dhcp && \
 
 VOLUME	/dhcpd
 ADD	["usr/local/sbin/start_dhcp_server.sh","/usr/local/sbin/start_dhcp_server.sh"]
-RUN	chmod 770 /usr/local/sbin/start_dhcp_server.sh
+RUN	addgroup dhcpd; \
+	adduser dhcpd -G dhcpd; \
+	chmod 770 /usr/local/sbin/start_dhcp_server.sh
 HEALTHCHECK	--start-period=10s --interval=120s --timeout=10s CMD nc -zvu 127.0.0.1 67 >/dev/null 2>&1 || exit 1
 ENTRYPOINT	["/usr/local/sbin/start_dhcp_server.sh", "/tmp/dhcpd.conf", "/dhcpd/dhcpd.leases"]

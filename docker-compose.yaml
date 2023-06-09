@@ -5,22 +5,23 @@ services:
       context: ./dhcpd
     restart: always
     network_mode: "host"
+    ports:
+      - "67:67/udp"
     env_file:
       - environments.env
     volumes:
       - dhcp:/dhcpd/
-    command: "br0"
   unbound:
     container_name: unbound
     restart: always
     network_mode: "host"
     env_file:
       - environments.env
-#    ports:
-#      - "53:53/tcp"
-#      - "53:53/udp"
-#      - "853:853/udp"
-#      - "853:853/tcp"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "853:853/udp"
+      - "853:853/tcp"
     volumes:
       - dhcp:/dhcpd/
       - certificates:/etc/certificates/
