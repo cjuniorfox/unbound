@@ -1,6 +1,7 @@
 #!/bin/ash
 dhcpd_config_file=$1
 dhcpd_leases_file=$2
+dhcpd_configs=$3
 if [[ -z "$dhcpd_config_file" ]]; then
 	echo -e "Please, declare your config file after command.\nUsage start_dhcpd.sh /tmp/dhcpd.conf /dhcpd/dhcpd.leases"
 	exit 1
@@ -53,6 +54,11 @@ cat << EOF >> $dhcpd_config_file
 }
 $OTHER_SETTINGS
 EOF
+if [[ ! -z "$dhcpd_configs" ]]; then
+	for file in "$dhcpd_configs"/*.conf; do
+		cat $file >> $dhcpd_config_file;
+	done;
+fi
 cat $dhcpd_config_file
 echo -e "\nStarting DHCPd server\n"
 dhcpd -cf $dhcpd_config_file -f -d --no-pid -lf $dhcpd_leases_file -user dhcpd -group dhcpd $IFNAME
