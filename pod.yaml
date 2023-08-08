@@ -1,0 +1,51 @@
+# Save the output of this file and use kubectl create -f to import
+# Created with podman-4.3.1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    io.kubernetes.cri-o.TTY/unbound: "false"
+    io.podman.annotations.autoremove/unbound: "FALSE"
+    io.podman.annotations.init/unbound: "FALSE"
+    io.podman.annotations.privileged/unbound: "FALSE"
+    io.podman.annotations.publish-all/unbound: "FALSE"
+  creationTimestamp: "2023-08-08T15:15:24Z"
+  labels:
+    app: unbound-pod
+  name: unbound-pod
+spec:
+  automountServiceAccountToken: false
+  containers:
+  - env:
+    - name: DOMAIN
+      value: juniorfox.net
+    image: docker.io/cjuniorfox/unbound:latest
+    name: unbound
+    securityContext:
+      capabilities:
+        drop:
+        - CAP_MKNOD
+        - CAP_NET_RAW
+        - CAP_AUDIT_WRITE
+    volumeMounts:
+    - mountPath: /dhcpd
+      name: var-lib-dhcp-host-0
+    - mountPath: /etc/certificates/
+      name: certificates-pvc
+    - mountPath: /unbound-conf
+      name: unbound_conf-pvc
+  enableServiceLinks: false
+  hostNetwork: true
+  hostname: mac-mini.juniorfox.net
+  volumes:
+  - hostPath:
+      path: /var/lib/dhcp
+      type: Directory
+    name: var-lib-dhcp-host-0
+  - name: certificates-pvc
+    persistentVolumeClaim:
+      claimName: certificates
+  - name: unbound_conf-pvc
+    persistentVolumeClaim:
+      claimName: unbound_conf
