@@ -21,7 +21,6 @@ firewall-cmd --permanent --add-${FORWARD}
 firewall-cmd --reload
 
 echo "Creating volume and network ${NETWORK}"
-podman volume create unbound_conf
 podman network create ${NETWORK} \
 	--driver bridge \
 	--gateway ${NET}.97 \
@@ -47,6 +46,3 @@ podman run -d \
 	--volume unbound_conf:/unbound-conf \
 	--volume certificates:/etc/certificates/ \
 	cjuniorfox/unbound
-
-
-
