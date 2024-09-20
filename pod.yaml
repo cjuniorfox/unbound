@@ -5,23 +5,19 @@ apiVersion: v1
 kind: Pod
 metadata:
   annotations:
-    io.kubernetes.cri-o.TTY/unbound: "false"
-    io.podman.annotations.autoremove/unbound: "FALSE"
-    io.podman.annotations.init/unbound: "FALSE"
-    io.podman.annotations.privileged/unbound: "FALSE"
-    io.podman.annotations.publish-all/unbound: "FALSE"
   creationTimestamp: "2023-08-08T15:15:24Z"
   labels:
-    app: unbound-pod
-  name: unbound-pod
+    app: unbound
+  name: unbound
 spec:
   automountServiceAccountToken: false
+  restartPolicy: Always
   containers:
-  - env:
+  - image: docker.io/cjuniorfox/unbound:latest
+    name: unbound
+    env:
     - name: DOMAIN
       value: juniorfox.net
-    image: docker.io/cjuniorfox/unbound:latest
-    name: unbound
     securityContext:
       capabilities:
         drop:
@@ -36,8 +32,20 @@ spec:
     - mountPath: /unbound-conf
       name: unbound_conf-pvc
   enableServiceLinks: false
-  hostNetwork: true
-  hostname: macmini.juniorfox.net
+  ports:
+    - containerPort: 53
+      hostPort: 53
+      hostIP: 10.1.1.62
+      protocol: UDP
+
+    - containerPort: 53
+      hostPort: 53
+      hostIP: 192.168.3.1
+      protocol: UDP
+
+    - containerPort: 853
+      hostPort: 853
+      protocol: TCP
   volumes:
   - hostPath:
       path: /var/lib/dhcp
