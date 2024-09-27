@@ -38,7 +38,7 @@ jobs:
           version=$(docker run --rm ${{ secrets.DOCKER_USERNAME }}/unbound:$version unbound -v 2>&1 | grep -oP 'unbound\s\K[\d\.]+')
           version=${version%.}
           echo "Unbound version: $version"
-          echo "::set-output name=VERSION::$version"
+          echo "VERSION=$version" >> $GITHUB_OUTPUT
 
       # Tag the Docker image with the Unbound version
       - name: Tag Docker Image
