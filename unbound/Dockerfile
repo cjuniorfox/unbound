@@ -18,4 +18,4 @@ ADD	["usr/local/sbin/unbound_watcher.sh","/usr/local/sbin/unbound_watcher.sh"]
 ADD	["usr/local/sbin/unbound_watcher.py","/usr/local/sbin/unbound_watcher.py"]
 RUN	/setup.sh
 HEALTHCHECK --start-period=60s --interval=120s --timeout=10s CMD dig @127.0.0.1 google.com | grep "status: NOERROR" || exit 1
-ENTRYPOINT	["supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]
