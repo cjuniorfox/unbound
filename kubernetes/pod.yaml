@@ -48,7 +48,7 @@ spec:
         path: /var/lib/dhcp/
     - name: unbound-conf-volume
       hostPath:
-        path: ./unbound-conf
+        path: ./volumes/unbound-conf
     - name: certificates-pvc
       persistentVolumeClaim:
         claimName: certificates
