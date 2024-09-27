@@ -35,7 +35,7 @@ jobs:
       - name: Get Unbound Version
         id: unbound_version
         run: |
-          version=$(docker run --rm ${{ secrets.DOCKER_USERNAME }}/unbound:$version unbound -v 2>&1 | grep -oP 'unbound\s\K[\d\.]+')
+          version=$(docker run --rm ${{ secrets.DOCKER_USERNAME }}/unbound:latest unbound -v 2>&1 | grep -oP 'unbound\s\K[\d\.]+')
           version=${version%.}
           echo "Unbound version: $version"
           echo "VERSION=$version" >> $GITHUB_OUTPUT
