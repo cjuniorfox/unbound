@@ -1,2 +1,2 @@
 #!/bin/bash
-docker compose exec dhcpd bash -c "cat /data/dhcpd.leases" | less
+docker compose exec dhcpd ash -c "cat /dhcpd/dhcpd.leases" | less

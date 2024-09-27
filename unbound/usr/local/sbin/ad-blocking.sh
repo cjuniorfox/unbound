@@ -6,4 +6,4 @@ while :; do
 	[ $? -eq 0 ] && echo "Blacklisted domains ads list finished at $(date) Successfully." || echo "An error occurried while downloading blacklisted ads list at $(date) with error code $?."
 	sleep 1d
 done
-/usr/local/sbin/restart_unbound.sh
+. /usr/local/sbin/restart_unbound.sh

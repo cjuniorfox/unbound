@@ -5,9 +5,12 @@ RUN	apk add --update dhcp && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/*
 
 VOLUME	/dhcpd
+VOLUME	/dhcpd-conf
 ADD	["usr/local/sbin/start_dhcp_server.sh","/usr/local/sbin/start_dhcp_server.sh"]
 RUN	addgroup dhcpd; \
 	adduser dhcpd -G dhcpd; \
-	chmod 770 /usr/local/sbin/start_dhcp_server.sh
+	mkdir /dhcpd/; \
+	touch /dhcpd/dhcpd.leases; \
+	chown dhcpd:dhcpd /dhcpd/dhcpd.leases
 HEALTHCHECK	--start-period=10s --interval=120s --timeout=10s CMD nc -zvu 127.0.0.1 67 >/dev/null 2>&1 || exit 1
-ENTRYPOINT	["/usr/local/sbin/start_dhcp_server.sh", "/tmp/dhcpd.conf", "/dhcpd/dhcpd.leases"]
+ENTRYPOINT	["/usr/local/sbin/start_dhcp_server.sh", "/tmp/dhcpd.conf", "/dhcpd/dhcpd.leases", "/dhcpd-conf"]

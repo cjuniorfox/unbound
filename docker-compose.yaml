@@ -11,6 +11,7 @@ services:
       - environments.env
     volumes:
       - dhcp:/dhcpd/
+      - ./dhcpd-conf:/dhcpd-conf/
   unbound:
     container_name: unbound
     restart: always
