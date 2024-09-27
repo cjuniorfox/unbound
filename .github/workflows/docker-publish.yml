@@ -35,7 +35,7 @@ jobs:
       - name: Get Unbound Version
         id: unbound_version
         run: |
-          version=$(podman run --rm unbound:latest unbound -v 2>&1 | grep -oP 'unbound\s\K[\d\.]+')
+          version=$(docker run --rm unbound:latest unbound -v 2>&1 | grep -oP 'unbound\s\K[\d\.]+')
           version=${version%.}
           echo "Unbound version: $version"
           echo "::set-output name=VERSION::$version"
