@@ -1,67 +1,75 @@
-# Save the output of this file and use kubectl create -f to import
-# it into Kubernetes.
-#
-# Created with podman-4.3.1
 apiVersion: v1
 kind: Pod
 metadata:
-  annotations:
-  creationTimestamp: "2024-09-20T22:55:08Z"
+  name: unbound
   labels:
     app: unbound
-  name: unbound
 spec:
   automountServiceAccountToken: false
   containers:
-  - env:
-    - name: DOMAIN
-      value: juniorfox.net
-    image: localhost/cjuniorfox/unbound:latest
-    name: server
-    ports:
-    - containerPort: 53
-      hostIP: 192.168.3.1
-      hostPort: 53
-      protocol: UDP
-    - containerPort: 853
-      hostPort: 853
-    - containerPort: 53
-      hostIP: 10.1.1.62
-      hostPort: 53
-      protocol: UDP
-    resources: {}
-    securityContext:
-      capabilities:
-        drop:
-        - CAP_MKNOD
-        - CAP_NET_RAW
-        - CAP_AUDIT_WRITE
-    volumeMounts:
-    - mountPath: /dhcpd
-      name: var-lib-dhcp-host-0
-    - mountPath: /unbound-conf
-      name: usr-local-src-podman-unbound-unbound-conf-host-1
-    - mountPath: /etc/certificates/
-      name: certificates-pvc
-    - mountPath: /etc/unbound/unbound.conf.d
-      name: unbound-conf-pvc
-  enableServiceLinks: false
-  hostname: unbound-pod
+    - name: server
+      image: cjuniorfox/unbound:1.20.0
+      resources:
+        limits:
+          memory: 200Mi
+          ephemeral-storage: "1Gi"
+        requests:
+          cpu: 0.5
+          memory: 100Mi
+          ephemeral-storage: "500Mi"
+      env:
+        - name: DOMAIN
+          value: "juniorfox.net"
+      ports:
+        - containerPort: 53
+          protocol: UDP
+          hostPort: 53
+          hostIP: 10.1.1.62
+        - containerPort: 53
+          protocol: UDP
+          hostPort: 53
+          hostIP: 192.168.3.1
+        - containerPort: 853
+          protocol: TCP
+          hostPort: 853
+      volumeMounts:
+        - name: dhcp-volume
+          mountPath: /dhcpd
+        - name: unbound-conf-volume
+          mountPath: /unbound-conf
+        - name: certificates-pvc
+          mountPath: /etc/certificates
+        - name: unbound-conf-d-pvc
+          mountPath: /etc/unbound/unbound.conf.d
   restartPolicy: Always
   volumes:
-  - name: certificates-pvc
-    persistentVolumeClaim:
-      claimName: certificates
-  - name: unbound-conf-pvc
-    persistentVolumeClaim:
-      claimName: unbound-conf
-  - hostPath:
-      path: /var/lib/dhcp
-      type: Directory
-    name: var-lib-dhcp-host-0
-  - hostPath:
-      path: /usr/local/src/podman/unbound/unbound-conf
-      type: Directory
-    name: usr-local-src-podman-unbound-unbound-conf-host-1
-status: {}
-
+    - name: dhcp-volume
+      hostPath:
+        path: /var/lib/dhcp/
+    - name: unbound-conf-volume
+      hostPath:
+        path: ./unbound-conf
+    - name: certificates-pvc
+      persistentVolumeClaim:
+        claimName: certificates
+    - name: unbound-conf-d-pvc
+      persistentVolumeClaim:
+        claimName: unbound-conf
+  networks:
+    - name: unbound-net
+      ipam:
+        config:
+          ip: 10.89.10.100
+---
+apiVersion: v1
+kind: Network
+metadata:
+  name: unbound-net
+spec:
+  plugins:
+    - name: bridge
+      ipam:
+        config:
+          - subnet: 10.89.10.96/28
+            gateway: 10.89.10.97
+            ipRange: 10.89.10.98/28
