@@ -35,20 +35,15 @@ jobs:
       - name: Get Unbound Version
         id: unbound_version
         run: |
-          version=$(docker run --rm ${{ secrets.DOCKER_USERNAME }}/unbound:latest unbound -V)
+          version=$(docker run --rm ${{ secrets.DOCKER_USERNAME }}/unbound:latest unbound -V | grep -oP 'unbound\s\K[\d\.]+')
           echo "Unbound version: $version"
-          echo "UNBOUND_VERSION=$version" >> $GITHUB_ENV
+          echo "::set-output name=VERSION::$version"
 
       # Tag the Docker image with the Unbound version
       - name: Tag Docker Image
         run: |
-          version=$(echo "${{ env.UNBOUND_VERSION }}" | grep -oP 'unbound \[\K[0-9]+\.[0-9]+\.[0-9]+')
-          if [ -n "$version" ]; then
-            docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:latest ${{ secrets.DOCKER_USERNAME }}/unbound:$version
-            echo "Tagged image with version: $version"
-          else
-            echo "Version extraction failed!"
-          fi
+          version=${{ steps.unbound_version.outputs.VERSION }}
+          docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:latest ${{ secrets.DOCKER_USERNAME }}/unbound:$version
 
       # Push both the latest and version-tagged Docker images to Docker Hub
       - name: Push Docker Images to Docker Hub
