@@ -2,6 +2,7 @@
 DOMAIN='juniorfox.net'
 POD='unbound-pod'
 NETWORK='unbound-net'
+VERSION='1.20.0'
 LAN=br0
 GUEST=vlan3
 IP_LAN="$(ip -o -f inet a show ${LAN} | awk '{print $4}' | awk -F"/" '{print $1}')"
@@ -46,4 +47,4 @@ podman run -d \
 	--volume $(pwd)/unbound-conf:/unbound-conf \
 	--volume certificates:/etc/certificates/ \
 	--volume unbound-conf:/etc/unbound/unbound.conf.d/ \
-	cjuniorfox/unbound
+	docker.io/cjuniorfox/unbound:${VERSION}
