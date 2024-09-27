@@ -3,7 +3,7 @@ DOMAIN='juniorfox.net'
 POD='unbound-pod'
 NETWORK='unbound-net'
 LAN=br0
-GUEST=guest
+GUEST=vlan3
 IP_LAN="$(ip -o -f inet a show ${LAN} | awk '{print $4}' | awk -F"/" '{print $1}')"
 IP_GUEST="$(ip -o -f inet a show ${GUEST} | awk '{print $4}' | awk -F"/" '{print $1}')"
 NET="10.89.10"
@@ -16,9 +16,9 @@ podman pod rm ${POD} && podman network rm ${NETWORK}
 
 #The firewall-cmd forward rule forwards any request targeting the gateway the podman container, don't matter what host is. If you prefer just sharing the port with the network. Just comment out the firewall-cmd rules below
 echo "Creating firewall-cmd '${FORWARD}'"
-firewall-cmd --permanent --remove-${FORWARD}
-firewall-cmd --permanent --add-${FORWARD}
-firewall-cmd --reload
+firewall-cmd --remove-${FORWARD}
+firewall-cmd --add-${FORWARD}
+firewall-cmd --runtime-to-permanent
 
 echo "Creating volume and network ${NETWORK}"
 podman network create ${NETWORK} \
@@ -43,6 +43,7 @@ podman run -d \
 	--restart always \
 	--env DOMAIN=${DOMAIN} \
 	--volume /var/lib/dhcp/:/dhcpd \
-	--volume unbound_conf:/unbound-conf \
+	--volume $(pwd)/unbound-conf:/unbound-conf \
 	--volume certificates:/etc/certificates/ \
+	--volume unbound-conf:/etc/unbound/unbound.conf.d/ \
 	cjuniorfox/unbound

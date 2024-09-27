@@ -1,23 +1,35 @@
 # Save the output of this file and use kubectl create -f to import
+# it into Kubernetes.
+#
 # Created with podman-4.3.1
----
 apiVersion: v1
 kind: Pod
 metadata:
   annotations:
-  creationTimestamp: "2023-08-08T15:15:24Z"
+  creationTimestamp: "2024-09-20T22:55:08Z"
   labels:
     app: unbound
   name: unbound
 spec:
   automountServiceAccountToken: false
-  restartPolicy: Always
   containers:
-  - image: docker.io/cjuniorfox/unbound:latest
-    name: unbound
-    env:
+  - env:
     - name: DOMAIN
       value: juniorfox.net
+    image: localhost/cjuniorfox/unbound:latest
+    name: server
+    ports:
+    - containerPort: 53
+      hostIP: 192.168.3.1
+      hostPort: 53
+      protocol: UDP
+    - containerPort: 853
+      hostPort: 853
+    - containerPort: 53
+      hostIP: 10.1.1.62
+      hostPort: 53
+      protocol: UDP
+    resources: {}
     securityContext:
       capabilities:
         drop:
@@ -27,33 +39,29 @@ spec:
     volumeMounts:
     - mountPath: /dhcpd
       name: var-lib-dhcp-host-0
+    - mountPath: /unbound-conf
+      name: usr-local-src-podman-unbound-unbound-conf-host-1
     - mountPath: /etc/certificates/
       name: certificates-pvc
-    - mountPath: /unbound-conf
-      name: unbound_conf-pvc
+    - mountPath: /etc/unbound/unbound.conf.d
+      name: unbound-conf-pvc
   enableServiceLinks: false
-  ports:
-    - containerPort: 53
-      hostPort: 53
-      hostIP: 10.1.1.62
-      protocol: UDP
-
-    - containerPort: 53
-      hostPort: 53
-      hostIP: 192.168.3.1
-      protocol: UDP
-
-    - containerPort: 853
-      hostPort: 853
-      protocol: TCP
+  hostname: unbound-pod
+  restartPolicy: Always
   volumes:
+  - name: certificates-pvc
+    persistentVolumeClaim:
+      claimName: certificates
+  - name: unbound-conf-pvc
+    persistentVolumeClaim:
+      claimName: unbound-conf
   - hostPath:
       path: /var/lib/dhcp
       type: Directory
     name: var-lib-dhcp-host-0
-  - name: certificates-pvc
-    persistentVolumeClaim:
-      claimName: certificates
-  - name: unbound_conf-pvc
-    persistentVolumeClaim:
-      claimName: unbound_conf
+  - hostPath:
+      path: /usr/local/src/podman/unbound/unbound-conf
+      type: Directory
+    name: usr-local-src-podman-unbound-unbound-conf-host-1
+status: {}
+
