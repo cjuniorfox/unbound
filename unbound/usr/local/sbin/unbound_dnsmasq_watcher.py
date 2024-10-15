@@ -1,12 +1,14 @@
 import os
+import sys
 import time
 import ipaddress
 import subprocess
 import syslog
 import argparse
+sys.path.insert(0, "/usr/local/opnsense/site-python")
 from daemonize import Daemonize
 
-DNSMASQ_LEASES_FILE = '/var/lib/misc/dnsmasq.leases'
+DNSMASQ_LEASES_FILE = '/var/lib/dnsmasq/dnsmasq.leases'
 DEFAULT_DOMAIN = 'local'
 CLEANUP_INTERVAL = 60  # seconds
 
