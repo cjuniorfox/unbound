@@ -71,7 +71,7 @@ podman run -d \
     --restart always \
     --env DOMAIN=juniorfox.net \
     --env DHCPSERVER=dhcpd \
-    --volume /var/lib/dhcp/dhcpd.leases:/leasesfile \
+    --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
     --volume $(pwd)/unbound-conf:/unbound-conf \
     --volume certificates:/etc/certificates/ \
     --volume unbound-conf:/etc/unbound/unbound.conf.d/ \
