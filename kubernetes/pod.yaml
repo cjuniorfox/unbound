@@ -34,7 +34,7 @@ spec:
           hostPort: 853
       volumeMounts:
         - name: dhcp-volume
-          mountPath: /dhcpd
+          mountPath: /dhcp.leases
         - name: unbound-conf-volume
           mountPath: /unbound-conf
         - name: certificates-pvc
@@ -45,10 +45,10 @@ spec:
   volumes:
     - name: dhcp-volume
       hostPath:
-        path: /var/lib/dhcp/
+        path: /var/lib/dhcp/dhcpd.leases
     - name: unbound-conf-volume
       hostPath:
-        path: ./volumes/unbound-conf
+        path: /usr/local/src/podman/unbound/kubernetes/volumes/unbound-conf/ 
     - name: certificates-pvc
       persistentVolumeClaim:
         claimName: certificates

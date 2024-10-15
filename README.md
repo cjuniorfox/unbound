@@ -10,6 +10,7 @@ This repository contains the necessary files to build and run an Unbound DNS ser
 - [Kubernetes Setup](#kubernetes-setup)
 - [Volumes](#volumes)
 - [Healthcheck](#healthcheck)
+- [Changelog](#changelog)
 
 ## Overview
 
@@ -19,21 +20,22 @@ This project sets up an Unbound DNS server using a containerized environment. Th
 
 The `Dockerfile` is used to build the Unbound DNS server container. It installs the necessary dependencies, sets up configuration files, and defines health checks.
 
-### Key Features:
+### Key Features
 
 - **Base Image**: Alpine Linux 3.18
 - **Installed Packages**: Unbound, OpenSSL, Python3, Bind-tools, Supervisor
 - **Volumes**:
   - `/unbound-conf`: Custom Unbound configuration files
   - `/etc/unbound/unbound.conf.d/`: Additional Unbound configuration
-  - `/dhcpd`: DHCP-related files
+  - `/dhcp.leases`: DHCP leases file
+  - `/etc/certificates`: TLS certificates files for TLS enable DNS server
 - **Healthcheck**: Ensures that Unbound is running correctly by querying `google.com`.
 
 ### Build the Docker Image
 
 To build the Docker image, run the following command:
 
-```sh 
+```sh
 docker build -t unbound-dns . 
 ```
 
@@ -43,7 +45,7 @@ You can use Podman to run the Unbound DNS server as a pod. The `pod.yaml` file d
 
 ### Steps to Run with Podman
 
-1. **Create the Pod and Network**:
+#### 1. **Create the Pod and Network**
 
 ```sh
 podman network create unbound-net \
@@ -60,7 +62,7 @@ podman pod create \
     --ip 10.89.10.100 unbound-pod 
 ```
 
-2. **Run the Container**:
+#### 2. **Run the Container**
 
 ```sh
 podman run -d \
@@ -68,16 +70,17 @@ podman run -d \
     --name unbound-server \
     --restart always \
     --env DOMAIN=juniorfox.net \
-    --volume /var/lib/dhcp/:/dhcpd \
+    --env DHCPSERVER=dhcpd \
+    --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
     --volume $(pwd)/unbound-conf:/unbound-conf \
     --volume certificates:/etc/certificates/ \
     --volume unbound-conf:/etc/unbound/unbound.conf.d/ \
     cjuniorfox/unbound:1.20.0 
 ```
 
-3. **Firewall Configuration** (Optional):
+#### 3. **Firewall Configuration** (Optional)
 
-If you want to forward DNS requests to the pod, you can configure the firewall:
+If you want to forward DNS requests to the pod, you can configure firewall:
 
 ```sh
 firewall-cmd --add-forward-port=port=53:proto=udp:toport=53:toaddr=10.89.10.100 --zone=internal 
@@ -90,13 +93,13 @@ The `pod.yaml` file can also be used to deploy the Unbound DNS server in a Kuber
 
 ### Steps to Deploy with Kubernetes
 
-1. **Apply the Pod and Network Configuration**:
+#### 1. **Apply the Pod and Network Configuration**
 
 ```sh
 kubectl apply -f pod.yaml 
 ```
 
-2. **Verify the Pod**:
+#### 2. **Verify the Pod**
 
 Check the status of the pod to ensure it is running:
 
@@ -104,7 +107,7 @@ Check the status of the pod to ensure it is running:
 kubectl get pods 
 ```
 
-3. **Access the DNS Server**:
+#### 3. **Access the DNS Server**
 
 The DNS server will be accessible on the specified host IPs and ports defined in the `pod.yaml` file.
 
@@ -114,7 +117,7 @@ The following volumes are used in the container:
 
 - **`/unbound-conf`**: Custom Unbound configuration files.
 - **`/etc/unbound/unbound.conf.d/`**: Additional Unbound configuration files.
-- **`/dhcpd`**: DHCP-related files.
+- **`/dhcp.leases`**: DHCP Leases file.
 - **Persistent Volume Claims (PVC)**:
   - `certificates-pvc`: Mounted at `/etc/certificates/`.
   - `unbound-conf-pvc`: Mounted at `/etc/unbound/unbound.conf.d/`.
@@ -123,4 +126,11 @@ Ensure that the paths for the volumes are correctly set up in your environment.
 
 ## Healthcheck
 
-The container includes a health check to ensure
+The container includes a health check to ensure that the Unbound server is up and running.
+
+## Changelog
+
+### 2023-10-15
+
+- Added **DNSMasq** Watcher
+- Renamed volume **/dhcpd** to **/dhcpd.leases** to reflect the leasesfile instead of directory containing the leases file.
