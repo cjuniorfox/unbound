@@ -6,9 +6,13 @@ RUN apk add --update bind-tools openssl python3 supervisor unbound wget && \
     mkdir -p /etc/unbound/unbound.conf.d/
 
 # Define volumes
+VOLUME /etc/certificates
 VOLUME /unbound-conf
 VOLUME /etc/unbound/unbound.conf.d/
-VOLUME /dhcpd
+VOLUME /dhcp.leases
+
+ENV DOMAIN="local"
+ENV DHCPSERVER="dhcpd"
 
 # Configure unbound
 RUN echo -e 'include-toplevel: "/etc/unbound/unbound.conf.d/*.conf"\ninclude-toplevel: "/unbound-conf/*.conf"' > /etc/unbound/unbound.conf
@@ -20,6 +24,7 @@ COPY usr/local/sbin/ad-blocking.sh /usr/local/sbin/ad-blocking.sh
 COPY setup.sh /setup.sh
 COPY usr/local/sbin/unbound_watcher.sh /usr/local/sbin/unbound_watcher.sh
 COPY usr/local/sbin/unbound_watcher.py /usr/local/sbin/unbound_watcher.py
+COPY usr/local/sbin/unbound_dnsmasq_watcher.py /usr/local/sbin/unbound_dnsmasq_watcher.py
 
 # Run setup script
 RUN /setup.sh
