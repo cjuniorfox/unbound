@@ -25,6 +25,7 @@ COPY setup.sh /setup.sh
 COPY usr/local/sbin/unbound_watcher.sh /usr/local/sbin/unbound_watcher.sh
 COPY usr/local/sbin/unbound_watcher.py /usr/local/sbin/unbound_watcher.py
 COPY usr/local/sbin/unbound_dnsmasq_watcher.py /usr/local/sbin/unbound_dnsmasq_watcher.py
+COPY usr/local/sbin/unbound_kea_watcher.py /usr/local/sbin/unbound_kea_watcher.py
 
 # Run setup script
 RUN /setup.sh
