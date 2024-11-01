@@ -26,28 +26,27 @@ class UnboundLocalData:
 
     def add_address(self, address, fqdn):
         self.data[address] = fqdn
-        logger.info(f"Added address {address} with FQDN {fqdn} to UnboundLocalData")
+        logger.debug(f"Added address {address} with FQDN {fqdn} to UnboundLocalData")
 
     def cleanup(self, address, fqdn):
         if address in self.data:
             del self.data[address]
-            logger.info(f"Removed address {address} with FQDN {fqdn} from UnboundLocalData")
+            logger.debug(f"Removed address {address} with FQDN {fqdn} from UnboundLocalData")
 
 def unbound_control(commands, input=None):
     """ Execute unbound-control command """
     input_string = None
     if input:
         input_string = '\n'.join(input) + '\n'
-    logger.info(f"Executing unbound-control command: {commands}")
+    logger.debug(f"Executing unbound-control command: {commands}")
     result = subprocess.run(['/usr/sbin/unbound-control'] + commands, input=input_string, text=True, capture_output=True)
-    logger.info(f"unbound-control output: {result.stdout}")
+    logger.debug(f"unbound-control output: {result.stdout}")
     if result.stderr:
         logger.error(f"unbound-control error: {result.stderr}")
 
 def parse_kea_leases(leases_file):
     leases = []
     if os.path.isfile(leases_file):
-        logger.info(f"Parsing Kea leases file: {leases_file}")
         with open(leases_file, 'r') as f:
             csv_reader = csv.DictReader(f)
             for row in csv_reader:
@@ -58,7 +57,7 @@ def parse_kea_leases(leases_file):
                     'expire': int(row['expire']),
                 }
                 leases.append(lease)
-        logger.info(f"Parsed {len(leases)} leases from {leases_file}")
+        logger.debug(f"Parsed {len(leases)} leases from {leases_file}")
     else:
         logger.warning(f"Leases file not found: {leases_file}")
     return leases
@@ -113,19 +112,14 @@ def run_watcher(target_filename, default_domain, watch_file):
 
         # Apply changes to Unbound
         if dhcpd_changed:
-            logger.info("Applying changes to Unbound")
             if remove_rr:
                 logger.info(f"Removing {len(remove_rr)} resource records")
                 unbound_control(['local_datas_remove'], input=remove_rr)
             if add_rr:
                 logger.info(f"Adding {len(add_rr)} resource records")
                 unbound_control(['local_datas'], input=add_rr)
-        else:
-            logger.info("No changes to apply to Unbound")
-
         # Sleep before next check
-        logger.info("Sleeping for 1 second before next iteration")
-        time.sleep(1)
+        time.sleep(5)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
