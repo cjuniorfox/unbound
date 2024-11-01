@@ -6,6 +6,7 @@ import subprocess
 import syslog
 import argparse
 import csv
+import logging
 sys.path.insert(0, "/usr/local/opnsense/site-python")
 from daemonize import Daemonize
 
@@ -13,6 +14,9 @@ KEA_LEASES_FILE = '/var/lib/kea/dhcp4.leases'
 DEFAULT_DOMAIN = 'local'
 CLEANUP_INTERVAL = 60  # seconds
 
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 class UnboundLocalData:
     def __init__(self):
         self.data = {}
@@ -22,21 +26,28 @@ class UnboundLocalData:
 
     def add_address(self, address, fqdn):
         self.data[address] = fqdn
+        logger.info(f"Added address {address} with FQDN {fqdn} to UnboundLocalData")
 
     def cleanup(self, address, fqdn):
         if address in self.data:
             del self.data[address]
+            logger.info(f"Removed address {address} with FQDN {fqdn} from UnboundLocalData")
 
 def unbound_control(commands, input=None):
     """ Execute unbound-control command """
     input_string = None
     if input:
         input_string = '\n'.join(input) + '\n'
-    subprocess.run(['/usr/sbin/unbound-control'] + commands, input=input_string, text=True)
+    logger.info(f"Executing unbound-control command: {commands}")
+    result = subprocess.run(['/usr/sbin/unbound-control'] + commands, input=input_string, text=True, capture_output=True)
+    logger.info(f"unbound-control output: {result.stdout}")
+    if result.stderr:
+        logger.error(f"unbound-control error: {result.stderr}")
 
 def parse_kea_leases(leases_file):
     leases = []
     if os.path.isfile(leases_file):
+        logger.info(f"Parsing Kea leases file: {leases_file}")
         with open(leases_file, 'r') as f:
             csv_reader = csv.DictReader(f)
             for row in csv_reader:
@@ -47,14 +58,19 @@ def parse_kea_leases(leases_file):
                     'expire': int(row['expire']),
                 }
                 leases.append(lease)
+        logger.info(f"Parsed {len(leases)} leases from {leases_file}")
+    else:
+        logger.warning(f"Leases file not found: {leases_file}")
     return leases
 
 def run_watcher(target_filename, default_domain, watch_file):
+    logger.info(f"Starting watcher with target_filename={target_filename}, default_domain={default_domain}, watch_file={watch_file}")
     unbound_local_data = UnboundLocalData()
     cached_leases = {}
     last_cleanup = time.time()
 
     while True:
+        logger.info("Starting new iteration of lease processing")
         leases = parse_kea_leases(watch_file)
         dhcpd_changed = False
         remove_rr = []
@@ -65,6 +81,7 @@ def run_watcher(target_filename, default_domain, watch_file):
             if lease['expire'] > time.time() and lease['hostname'] and lease['address']:
                 address = ipaddress.ip_address(lease['address'])
                 fqdn = f"{lease['hostname']}.{default_domain}"
+                logger.info(f"Processing lease: address={address}, hostname={lease['hostname']}, fqdn={fqdn}")
 
                 # Cache the lease
                 cached_leases[lease['address']] = lease
@@ -72,6 +89,7 @@ def run_watcher(target_filename, default_domain, watch_file):
 
                 # Update Unbound if necessary
                 if not unbound_local_data.is_equal(lease['address'], fqdn):
+                    logger.info(f"Updating Unbound for {address}")
                     remove_rr.append(f"{address.reverse_pointer}")
                     remove_rr.append(f"{fqdn}")
                     unbound_local_data.cleanup(lease['address'], fqdn)
@@ -81,9 +99,11 @@ def run_watcher(target_filename, default_domain, watch_file):
 
         # Cleanup expired leases
         if time.time() - last_cleanup > CLEANUP_INTERVAL:
+            logger.info("Performing cleanup of expired leases")
             last_cleanup = time.time()
             for address in list(cached_leases):
                 if cached_leases[address]['expire'] < time.time():
+                    logger.info(f"Removing expired lease for {address}")
                     fqdn = f"{cached_leases[address]['hostname']}.{default_domain}"
                     remove_rr.append(f"{ipaddress.ip_address(address).reverse_pointer}")
                     remove_rr.append(f"{fqdn}")
@@ -93,12 +113,18 @@ def run_watcher(target_filename, default_domain, watch_file):
 
         # Apply changes to Unbound
         if dhcpd_changed:
+            logger.info("Applying changes to Unbound")
             if remove_rr:
+                logger.info(f"Removing {len(remove_rr)} resource records")
                 unbound_control(['local_datas_remove'], input=remove_rr)
             if add_rr:
+                logger.info(f"Adding {len(add_rr)} resource records")
                 unbound_control(['local_datas'], input=add_rr)
+        else:
+            logger.info("No changes to apply to Unbound")
 
         # Sleep before next check
+        logger.info("Sleeping for 1 second before next iteration")
         time.sleep(1)
 
 if __name__ == '__main__':
@@ -112,9 +138,12 @@ if __name__ == '__main__':
 
     syslog.openlog('unbound_kea_watcher', facility=syslog.LOG_LOCAL4)
 
+    logger.info(f"Starting unbound_kea_watcher with arguments: {vars(inputargs)}")
     if inputargs.foreground:
+        logger.info("Running in foreground mode")
         run_watcher(target_filename=inputargs.target, default_domain=inputargs.domain, watch_file=inputargs.source)
     else:
+        logger.info("Running in daemon mode")
         syslog.syslog(syslog.LOG_NOTICE, 'daemonize unbound kea watcher.')
         cmd = lambda: run_watcher(target_filename=inputargs.target, default_domain=inputargs.domain, watch_file=inputargs.source)
         daemon = Daemonize(app="unbound_kea_watcher", pid=inputargs.pid, action=cmd)
