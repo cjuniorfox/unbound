@@ -78,6 +78,12 @@ podman run -d \
     cjuniorfox/unbound:1.20.0 
 ```
 
+- **DOMAIN** is the domain defined as the `search domains`.
+- **DHCPSERVER** is the name of the DHCP server. It is used to retrieve DHCP leases. Can be 
+  - `dhcpd`
+  - `kea`
+  - `dnsmasq`.
+
 #### 3. **Firewall Configuration** (Optional)
 
 If you want to forward DNS requests to the pod, you can configure firewall:
