@@ -80,7 +80,7 @@ def run_watcher(target_filename, default_domain, watch_file):
             if lease['expire'] > time.time() and lease['hostname'] and lease['address']:
                 address = ipaddress.ip_address(lease['address'])
                 fqdn = f"{lease['hostname']}.{default_domain}"
-                logger.info(f"Processing lease: address={address}, hostname={lease['hostname']}, fqdn={fqdn}")
+                logger.debug(f"Processing lease: address={address}, hostname={lease['hostname']}, fqdn={fqdn}")
 
                 # Cache the lease
                 cached_leases[lease['address']] = lease
