@@ -34,6 +34,8 @@ RUN /setup.sh
 EXPOSE 53/UDP
 EXPOSE 853/UDP
 
+ENV DHCP_WATCHER_LOG_LEVEL=INFO
+
 # Healthcheck to ensure Unbound is running correctly
 HEALTHCHECK --start-period=60s --interval=120s --timeout=10s CMD dig @127.0.0.1 google.com | grep "status: NOERROR" || exit 1
 
