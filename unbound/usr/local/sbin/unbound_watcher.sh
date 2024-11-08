@@ -5,7 +5,7 @@ fi
 WATCHER="/usr/local/sbin/unbound_watcher.py"
 
 if [ "${DHCPSERVER}" == "dnsmasq" ]; then
-	WATCHER="/usr/local/sbin/unbound_dnsmasq_watcher.py"
+	WATCHER="/usr/local/sbin/unbound_dnsmasq_watcher.py --log-level=${DHCP_LOG_LEVEL}"
 elif [ "${DHCPSERVER}" == "kea" ]; then
 	WATCHER="/usr/local/sbin/unbound_kea_watcher.py"
 fi
