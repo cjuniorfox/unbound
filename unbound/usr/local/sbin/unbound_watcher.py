@@ -219,7 +219,7 @@ if __name__ == '__main__':
     parser.add_argument('--foreground', help='run in foreground', default=False, action='store_true')
     parser.add_argument('--domain', help='default domain to use',  default='local')
     parser.add_argument('--config', help='configuration file to use',  default='/usr/local/etc/unbound_dhcpd.conf')
-
+    parser.add_argument('--log-level', help='set the logging level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
     inputargs = parser.parse_args()
 
     syslog.openlog('unbound', facility=syslog.LOG_LOCAL4)
