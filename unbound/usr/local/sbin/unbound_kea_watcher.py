@@ -15,8 +15,8 @@ DEFAULT_DOMAIN = 'local'
 CLEANUP_INTERVAL = 60  # seconds
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
 class UnboundLocalData:
     def __init__(self):
         self.data = {}
@@ -69,7 +69,7 @@ def run_watcher(target_filename, default_domain, watch_file):
     last_cleanup = time.time()
 
     while True:
-        logger.info("Starting new iteration of lease processing")
+        logger.debug("Starting new iteration of lease processing")
         leases = parse_kea_leases(watch_file)
         dhcpd_changed = False
         remove_rr = []
@@ -88,7 +88,7 @@ def run_watcher(target_filename, default_domain, watch_file):
 
                 # Update Unbound if necessary
                 if not unbound_local_data.is_equal(lease['address'], fqdn):
-                    logger.info(f"Updating Unbound for {address}")
+                    logger.info(f"Updating Unbound for {address} {lease['hostname']}.{fqdn}")
                     remove_rr.append(f"{address.reverse_pointer}")
                     remove_rr.append(f"{fqdn}")
                     unbound_local_data.cleanup(lease['address'], fqdn)
@@ -128,8 +128,11 @@ if __name__ == '__main__':
     parser.add_argument('--target', help='target config file, used when unbound restarts', default='/var/unbound/dhcpleases.conf')
     parser.add_argument('--domain', help='default domain to use', default=DEFAULT_DOMAIN)
     parser.add_argument('--foreground', help='run in foreground', default=False, action='store_true')
+    parser.add_argument('--log-level', help='set the logging level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
     inputargs = parser.parse_args()
 
+    # Set the logging level based on the argument
+    logging.basicConfig(level=getattr(logging, inputargs.log_level), format='%(asctime)s - %(levelname)s - %(message)s')
     syslog.openlog('unbound_kea_watcher', facility=syslog.LOG_LOCAL4)
 
     logger.info(f"Starting unbound_kea_watcher with arguments: {vars(inputargs)}")
