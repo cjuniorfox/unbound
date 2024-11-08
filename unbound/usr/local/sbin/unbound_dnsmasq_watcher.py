@@ -109,6 +109,7 @@ if __name__ == '__main__':
     parser.add_argument('--target', help='target config file, used when unbound restarts', default='/var/unbound/dhcpleases.conf')
     parser.add_argument('--domain', help='default domain to use', default=DEFAULT_DOMAIN)
     parser.add_argument('--foreground', help='run in foreground', default=False, action='store_true')
+    parser.add_argument('--log-level', help='set the logging level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
     inputargs = parser.parse_args()
 
     syslog.openlog('unbound_dnsmasq_watcher', facility=syslog.LOG_LOCAL4)
