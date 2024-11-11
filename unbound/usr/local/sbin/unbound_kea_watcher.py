@@ -103,7 +103,7 @@ def run_watcher(target_filename, default_domain, watch_file):
 
         # Cleanup expired leases
         if time.time() - last_cleanup > CLEANUP_INTERVAL:
-            logger.info("Performing cleanup of expired leases")
+            logger.debug("Performing cleanup of expired leases")
             last_cleanup = time.time()
             for address in list(cached_leases):
                 if cached_leases[address]['expire'] < time.time():
