@@ -7,6 +7,7 @@ import syslog
 import argparse
 import csv
 import logging
+from datetime import timedelta
 sys.path.insert(0, "/usr/local/opnsense/site-python")
 from daemonize import Daemonize
 
@@ -95,6 +96,10 @@ def run_watcher(target_filename, default_domain, watch_file):
                     add_rr.append(f"{address.reverse_pointer} PTR {fqdn}")
                     add_rr.append(f"{fqdn} IN A {lease['address']}")
                     unbound_local_data.add_address(lease['address'], fqdn)
+            elif lease['expire'] < time.time():
+                logger.debug(f"Lease Expired: [{lease['hostname']}: {lease['address']}] by [{str(timedelta(seconds=(time.time() - lease['expire'])))}]. Expired epoch [{lease['expire']}].")
+            else:
+                logger.debug(f"Lease ignored: [{lease['hostname']}: {lease['address']}]. Does not have hostname or address")
 
         # Cleanup expired leases
         if time.time() - last_cleanup > CLEANUP_INTERVAL:
