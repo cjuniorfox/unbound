@@ -6,10 +6,8 @@ RUN apk add --update bind-tools openssl python3 supervisor unbound wget && \
     mkdir -p /etc/unbound/unbound.conf.d/
 
 # Define volumes
-VOLUME /etc/certificates
 VOLUME /unbound-conf
 VOLUME /etc/unbound/unbound.conf.d/
-VOLUME /dhcp.leases
 
 ENV DOMAIN="local"
 ENV DHCPSERVER="dhcpd"
