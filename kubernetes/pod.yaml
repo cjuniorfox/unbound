@@ -39,8 +39,6 @@ spec:
           mountPath: /unbound-conf
         - name: certificates-pvc
           mountPath: /etc/certificates
-        - name: unbound-conf-d-pvc
-          mountPath: /etc/unbound/unbound.conf.d
   restartPolicy: Always
   volumes:
     - name: dhcp-volume
@@ -52,9 +50,6 @@ spec:
     - name: certificates-pvc
       persistentVolumeClaim:
         claimName: certificates
-    - name: unbound-conf-d-pvc
-      persistentVolumeClaim:
-        claimName: unbound-conf
   networks:
     - name: unbound-net
       ipam:

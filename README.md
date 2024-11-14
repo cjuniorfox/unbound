@@ -74,12 +74,12 @@ podman run -d \
     --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
     --volume $(pwd)/unbound-conf:/unbound-conf \
     --volume certificates:/etc/certificates/ \
-    --volume unbound-conf:/etc/unbound/unbound.conf.d/ \
     cjuniorfox/unbound:1.20.0 
 ```
 
 - **DOMAIN** is the domain defined as the `search domains`.
-- **DHCPSERVER** is the name of the DHCP server. It is used to retrieve DHCP leases. Can be 
+- **DHCPSERVER** is the name of the DHCP server. It is used to retrieve DHCP leases. Can be:
+
   - `dhcpd`
   - `kea`
   - `dnsmasq`.
