@@ -17,9 +17,10 @@ COPY etc/unbound/unbound.conf.d/* /etc/unbound/unbound.conf.d/
 COPY usr/local/sbin/ad-blocking.sh /usr/local/sbin/ad-blocking.sh
 COPY setup.sh /setup.sh
 COPY usr/local/sbin/unbound_watcher.sh /usr/local/sbin/unbound_watcher.sh
-COPY usr/local/sbin/unbound_watcher.py /usr/local/sbin/unbound_watcher.py
+COPY usr/local/sbin/unbound_dhcpd_watcher.py /usr/local/sbin/unbound_dhcpd_watcher.py
 COPY usr/local/sbin/unbound_dnsmasq_watcher.py /usr/local/sbin/unbound_dnsmasq_watcher.py
 COPY usr/local/sbin/unbound_kea_watcher.py /usr/local/sbin/unbound_kea_watcher.py
+COPY usr/local/sbin/unbound_systemd_networkd_watcher.py /usr/local/sbin/unbound_systemd_networkd_watcher.py
 
 RUN /setup.sh
 
@@ -28,6 +29,9 @@ EXPOSE 853/UDP
 
 ENV DHCP_LOG_LEVEL=INFO
 
-HEALTHCHECK --start-period=60s --interval=120s --timeout=10s CMD dig @127.0.0.1 google.com | grep "status: NOERROR" || exit 1
+COPY healthcheck.sh /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/healthcheck.sh
+
+HEALTHCHECK --start-period=60s --interval=120s --timeout=10s CMD ["/usr/local/bin/healthcheck.sh"]
 
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
