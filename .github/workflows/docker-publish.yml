@@ -1,5 +1,4 @@
 name: Build, Tag, and Publish Unbound Docker Image
-
 on:
   push:
     branches:
