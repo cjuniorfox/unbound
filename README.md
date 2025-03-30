@@ -8,8 +8,11 @@ This repository contains the necessary files to build and run an Unbound DNS ser
 - [Dockerfile](#dockerfile)
 - [Podman Setup](#podman-setup)
 - [Kubernetes Setup](#kubernetes-setup)
+- [Using the Docker Images](#using-the-docker-images)
 - [Volumes](#volumes)
 - [Healthcheck](#healthcheck)
+- [Troubleshooting](#troubleshooting)
+- [Testing](#testing)
 - [Changelog](#changelog)
 
 ## Overview
@@ -27,8 +30,8 @@ The `Dockerfile` is used to build the Unbound DNS server container. It installs 
 - **Volumes**:
   - `/unbound-conf`: Custom Unbound configuration files
   - `/etc/unbound/unbound.conf.d/`: Additional Unbound configuration
-  - `/dhcp.leases`: DHCP leases file
-  - `/etc/certificates`: TLS certificates files for TLS enable DNS server
+  - `/dhcp.leases`: DHCP leases file or directory
+  - `/etc/certificates`: TLS certificates files for TLS-enabled DNS server
 - **Healthcheck**: Ensures that Unbound is running correctly by querying `google.com`.
 
 ### Build the Docker Image
@@ -82,11 +85,24 @@ podman run -d \
 
   - `dhcpd`
   - `kea`
-  - `dnsmasq`.
+  - `dnsmasq`
+  - `systemd-networkd`
+
+### Notes about DHCPSERVER
+
+- If the `DHCPSERVER` variable is not set, the container will print the following message and remain idle:
+
+  ```txt
+  No DHCP server defined. Keeping the process running but doing nothing...
+  ```
+
+- Ensure that the `/dhcp.leases` file or directory is correctly mounted and accessible by the container.
+
+---
 
 #### 3. **Firewall Configuration** (Optional)
 
-If you want to forward DNS requests to the pod, you can configure firewall:
+If you want to forward DNS requests to the pod, you can configure the firewall:
 
 ```sh
 firewall-cmd --add-forward-port=port=53:proto=udp:toport=53:toaddr=10.89.10.100 --zone=internal 
@@ -117,13 +133,81 @@ kubectl get pods
 
 The DNS server will be accessible on the specified host IPs and ports defined in the `pod.yaml` file.
 
+## Using the Docker Images
+
+The Docker images for this project are published to Docker Hub. You can pull and run the images for both the `main` and `develop` branches.
+
+### Pulling the Images
+
+1. **Stable Release (Main Branch)**:
+   - The `main` branch publishes the `latest` tag and versioned tags (e.g., `1.20.0`).
+   - To pull the stable release:
+
+     ```sh
+     docker pull docker.io/cjuniorfox/unbound:latest
+     ```
+
+   - To pull a specific version:
+
+     ```sh
+     docker pull docker.io/cjuniorfox/unbound:1.20.0
+     ```
+
+2. **Development Version (Develop Branch)**:
+   - The `develop` branch publishes the `developer` tag and versioned `-develop` tags (e.g., `1.20.0-develop`).
+   - To pull the development version:
+
+     ```sh
+     docker pull docker.io/cjuniorfox/unbound:developer
+     ```
+
+   - To pull a specific development version:
+
+     ```sh
+     docker pull docker.io/cjuniorfox/unbound:1.20.0-develop
+     ```
+
+### Running the Images
+
+1. **Run the Stable Release**:
+
+   ```sh
+   docker run -d \
+       --name unbound-server \
+       --restart always \
+       --env DOMAIN=juniorfox.net \
+       --env DHCPSERVER=dhcpd \
+       --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
+       --volume $(pwd)/unbound-conf:/unbound-conf \
+       --volume certificates:/etc/certificates/ \
+       docker.io/cjuniorfox/unbound:latest
+   ```
+
+2. **Run the Development Version**:
+
+   ```sh
+   docker run -d \
+       --name unbound-server-dev \
+       --restart always \
+       --env DOMAIN=juniorfox.net \
+       --env DHCPSERVER=dhcpd \
+       --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
+       --volume $(pwd)/unbound-conf:/unbound-conf \
+       --volume certificates:/etc/certificates/ \
+       docker.io/cjuniorfox/unbound:developer
+   ```
+
+### Notes
+
+- Ensure the required volumes and environment variables are correctly set up.
+
 ## Volumes
 
 The following volumes are used in the container:
 
 - **`/unbound-conf`**: Custom Unbound configuration files.
 - **`/etc/unbound/unbound.conf.d/`**: Additional Unbound configuration files.
-- **`/dhcp.leases`**: DHCP Leases file.
+- **`/dhcp.leases`**: DHCP leases file or directory.
 - **Persistent Volume Claims (PVC)**:
   - `certificates-pvc`: Mounted at `/etc/certificates/`.
   - `unbound-conf-pvc`: Mounted at `/etc/unbound/unbound.conf.d/`.
@@ -132,11 +216,75 @@ Ensure that the paths for the volumes are correctly set up in your environment.
 
 ## Healthcheck
 
-The container includes a health check to ensure that the Unbound server is up and running.
+The container includes a health check to ensure that the Unbound server is up and running. You can verify the health status using the following command:
+
+```sh
+docker inspect --format='{{json .State.Health}}' unbound-server
+```
+
+## Troubleshooting
+
+### Docker Daemon Not Running
+
+If you encounter an error like `Cannot connect to the Docker daemon`, ensure that the Docker service is running:
+
+```sh
+sudo systemctl start docker
+```
+
+## Testing
+
+Unit tests are included to validate the functionality of the Unbound watcher scripts. The tests cover the following scenarios:
+
+- Parsing leases from a file or directory.
+- Identifying new or updated leases.
+- Detecting expired leases.
+- Detecting leases that no longer exist.
+- Updating Unbound records correctly.
+
+### Running the Tests
+
+1. **Install Dependencies**:
+   Ensure you have Python 3 and `unittest` installed.
+
+2. **Set the `PYTHONPATH`**:
+   Add the `unbound` directory to the `PYTHONPATH` environment variable:
+
+   ```sh
+   export PYTHONPATH=/path/of/the/project/unbound:$PYTHONPATH
+   ```
+
+3. **Run the Tests**:
+   Use the following command to run all tests:
+
+   ```sh
+   python3 -m unittest discover -s /path/of/the/project/tests
+   ```
+
+4. **Expected Output**:
+   If all tests pass, you should see output similar to:
+
+   ```sh
+   ....
+   ----------------------------------------------------------------------
+   Ran 4 tests in 0.004s
+
+   OK
+   ```
 
 ## Changelog
 
+### 2025-03-30
+
+- Added **System-Networkd DHCP Server** Watcher.
+- Added the option of not having any DHCP Server Watcher at all.
+- Added unit tests for parsing leases, detecting changes, and updating Unbound.
+
+### 2024-11-01
+
+- Added **Kea DHCP Server** Watcher.
+
 ### 2023-10-15
 
-- Added **DNSMasq** Watcher
-- Renamed volume **/dhcpd** to **/dhcpd.leases** to reflect the leasesfile instead of directory containing the leases file.
+- Added **DNSMasq** Watcher.
+- Renamed volume **/dhcpd** to **/dhcpd.leases** to reflect the leases file instead of a directory containing the leases file.
