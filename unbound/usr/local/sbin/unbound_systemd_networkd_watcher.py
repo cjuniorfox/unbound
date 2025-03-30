@@ -109,7 +109,7 @@ def run_watcher(target_filename, default_domain, watch_dir_or_file):
     
                 # Update Unbound if necessary
                 if not unbound_local_data.is_equal(lease['address'], fqdn):
-                    logger.info(f"Updating Unbound for {address} {lease['hostname']}.{fqdn}")
+                    logger.info(f"Updating Unbound for {address} {fqdn}")
                     remove_rr.append(f"{address.reverse_pointer}")
                     remove_rr.append(f"{fqdn}")
                     unbound_local_data.cleanup(lease['address'], fqdn)
