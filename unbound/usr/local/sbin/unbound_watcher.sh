@@ -15,6 +15,8 @@ elif [ "${DHCPSERVER}" == "dnsmasq" ]; then
 	WATCHER="/usr/local/sbin/unbound_dnsmasq_watcher.py"
 elif [ "${DHCPSERVER}" == "kea" ]; then
 	WATCHER="/usr/local/sbin/unbound_kea_watcher.py"
+elif [ "${DHCPSERVER}" == "systemd-networkd" ]; then
+	WATCHER="/usr/local/sbin/unbound_systemd_networkd_watcher.py"
 fi
 
 if [ ! -e '/dhcp.leases' ]; then
