@@ -1,9 +1,10 @@
 FROM alpine:3.21
 
 # Install unbound and other dependencies
-RUN apk add --update bind-tools openssl python3 supervisor unbound wget && \
+RUN apk add --update bind-tools openssl python3 supervisor unbound  wget && \
     rm -rf /var/cache/apk/* && \
-    mkdir -p /etc/unbound/unbound.conf.d
+    mkdir -p /etc/unbound/unbound.conf.d && \
+    pip install daemonize
 
 ENV DOMAIN="home"
 ENV DHCPSERVER="dhcpd"
