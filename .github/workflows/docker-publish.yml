@@ -39,7 +39,7 @@ jobs:
       # Build the Docker image
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/unbound:base ./unbound
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/unbound:base ./app
 
       # Extract Unbound version
       - name: Get Unbound Version
