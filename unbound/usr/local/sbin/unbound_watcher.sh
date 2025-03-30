@@ -8,6 +8,7 @@ if [ ! -z "$DHCPSERVER" ]; then
 	echo "No DHCP server defined. Keeping the process running but doing nothing..."
     while true; do
         sleep 3600  # Sleep for 1 hour to keep the process alive
+	done
 elif [ "${DHCPSERVER}" == "dhcpd" ]; then
 	WATCHER="/usr/local/sbin/unbound_dhcpd_watcher.py"
 elif [ "${DHCPSERVER}" == "dnsmasq" ]; then
