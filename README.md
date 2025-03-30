@@ -137,6 +137,30 @@ The DNS server will be accessible on the specified host IPs and ports defined in
 
 The Docker images for this project are published to Docker Hub. You can pull and run the images for both the `main` and `develop` branches.
 
+### Note about the image
+
+All references point to the Docker image, but you can also pull it from GitHub Container Registry (GHCR) using the image `ghcr.io/cjuniorfox/unbound:<version>`, where `<version>` can be:
+
+- `developer`
+- `latest`
+- A specific version number (e.g., `1.20.0`)
+
+#### Pulling from GHCR
+
+To pull an image from GitHub Container Registry:
+
+```sh
+docker pull ghcr.io/cjuniorfox/unbound:latest
+```
+
+#### Authentication for GHCR
+
+If you encounter permission issues when pulling from GHCR, ensure you are logged in:
+
+```sh
+echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
+```
+
 ### Pulling the Images
 
 1. **Stable Release (Main Branch)**:

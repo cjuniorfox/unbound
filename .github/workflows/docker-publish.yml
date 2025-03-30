@@ -1,4 +1,5 @@
 name: Build, Tag, and Publish Unbound Docker Image
+
 on:
   push:
     branches:
@@ -27,6 +28,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Log in to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       # Build the Docker image
       - name: Build Docker Image
         run: |
@@ -49,22 +57,38 @@ jobs:
             # Tag as developer
             docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ${{ secrets.DOCKER_USERNAME }}/unbound:developer
             docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ${{ secrets.DOCKER_USERNAME }}/unbound:${version}-develop
+            docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ghcr.io/${{ github.repository_owner }}/unbound:developer
+            docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ghcr.io/${{ github.repository_owner }}/unbound:${version}-develop
           elif [[ "${{ github.ref_name }}" == "main" ]]; then
             # Tag as latest and version
             docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ${{ secrets.DOCKER_USERNAME }}/unbound:latest
             docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ${{ secrets.DOCKER_USERNAME }}/unbound:${version}
+            docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ghcr.io/${{ github.repository_owner }}/unbound:latest
+            docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ghcr.io/${{ github.repository_owner }}/unbound:${version}
           fi
 
       # Push Developer Tags for Develop Branch
-      - name: Push Developer Tags
+      - name: Push Developer Tags to Docker Hub
         if: github.ref_name == 'develop'
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/unbound:developer
           docker push ${{ secrets.DOCKER_USERNAME }}/unbound:${{ steps.unbound_version.outputs.VERSION }}-develop
 
+      - name: Push Developer Tags to GitHub Container Registry
+        if: github.ref_name == 'develop'
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/unbound:developer
+          docker push ghcr.io/${{ github.repository_owner }}/unbound:${{ steps.unbound_version.outputs.VERSION }}-develop
+
       # Push Main Tags for Main Branch
-      - name: Push Main Tags
+      - name: Push Main Tags to Docker Hub
         if: github.ref_name == 'main'
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/unbound:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/unbound:${{ steps.unbound_version.outputs.VERSION }}
+
+      - name: Push Main Tags to GitHub Container Registry
+        if: github.ref_name == 'main'
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/unbound:latest
+          docker push ghcr.io/${{ github.repository_owner }}/unbound:${{ steps.unbound_version.outputs.VERSION }}

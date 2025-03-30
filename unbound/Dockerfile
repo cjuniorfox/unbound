@@ -1,4 +1,4 @@
-FROM alpine:3.18
+FROM alpine:3.21
 
 # Install unbound and other dependencies
 RUN apk add --update bind-tools openssl python3 supervisor unbound wget && \
