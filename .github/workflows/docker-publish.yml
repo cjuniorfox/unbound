@@ -13,7 +13,7 @@ on:
     - cron: "0 0 1 * *"  # Runs on the 1st day of every month at midnight (UTC)
 
 jobs:
-  build-and-publish:
+  build-and-tag:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,6 +32,7 @@ jobs:
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -65,30 +66,33 @@ jobs:
             docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ${{ secrets.DOCKER_USERNAME }}/unbound:${version}
             docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ghcr.io/${{ github.repository_owner }}/unbound:latest
             docker tag ${{ secrets.DOCKER_USERNAME }}/unbound:base ghcr.io/${{ github.repository_owner }}/unbound:${version}
-          fi
 
-      # Push Developer Tags for Develop Branch
-      - name: Push Developer Tags to Docker Hub
-        if: github.ref_name == 'develop'
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/unbound:developer
-          docker push ${{ secrets.DOCKER_USERNAME }}/unbound:${{ steps.unbound_version.outputs.VERSION }}-develop
+  push-images:
+    needs: build-and-tag
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        registry: [dockerhub, ghcr]
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Push Developer Tags to GitHub Container Registry
-        if: github.ref_name == 'develop'
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/unbound:developer
-          docker push ghcr.io/${{ github.repository_owner }}/unbound:${{ steps.unbound_version.outputs.VERSION }}-develop
+      # Log in to the appropriate registry
+      - name: Log in to Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ matrix.registry == 'dockerhub' && 'docker.io' || 'ghcr.io' }}
+          username: ${{ matrix.registry == 'dockerhub' && secrets.DOCKER_USERNAME || github.actor }}
+          password: ${{ matrix.registry == 'dockerhub' && secrets.DOCKER_PASSWORD || secrets.GITHUB_TOKEN }}
 
-      # Push Main Tags for Main Branch
-      - name: Push Main Tags to Docker Hub
-        if: github.ref_name == 'main'
+      # Push images to the appropriate registry
+      - name: Push Images
         run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/unbound:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/unbound:${{ steps.unbound_version.outputs.VERSION }}
-
-      - name: Push Main Tags to GitHub Container Registry
-        if: github.ref_name == 'main'
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/unbound:latest
-          docker push ghcr.io/${{ github.repository_owner }}/unbound:${{ steps.unbound_version.outputs.VERSION }}
+          version=${{ needs.build-and-tag.outputs.VERSION }}
+          if [[ "${{ github.ref_name }}" == "develop" ]]; then
+            docker push ${{ matrix.registry == 'dockerhub' && secrets.DOCKER_USERNAME || 'ghcr.io/${{ github.repository_owner }}' }}/unbound:developer
+            docker push ${{ matrix.registry == 'dockerhub' && secrets.DOCKER_USERNAME || 'ghcr.io/${{ github.repository_owner }}' }}/unbound:${version}-develop
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            docker push ${{ matrix.registry == 'dockerhub' && secrets.DOCKER_USERNAME || 'ghcr.io/${{ github.repository_owner }}' }}/unbound:latest
+            docker push ${{ matrix.registry == 'dockerhub' && secrets.DOCKER_USERNAME || 'ghcr.io/${{ github.repository_owner }}' }}/unbound:${version}
