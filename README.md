@@ -275,7 +275,7 @@ Unit tests are included to validate the functionality of the Unbound watcher scr
    Add the `unbound` directory to the `PYTHONPATH` environment variable:
 
    ```sh
-   export PYTHONPATH=/path/of/the/project/unbound:$PYTHONPATH
+   export PYTHONPATH=/path/of/the/project/app/dhcp_watcher:$PYTHONPATH
    ```
 
 3. **Run the Tests**:
