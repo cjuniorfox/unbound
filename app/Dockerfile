@@ -35,6 +35,6 @@ ENV DHCP_LOG_LEVEL=INFO
 
 RUN chmod +x /scripts/healthcheck.sh
 
-HEALTHCHECK --start-period=60s --interval=120s --timeout=10s CMD ["/scripts/healthcheck.sh"]
+HEALTHCHECK --start-period=60s --interval=120s --timeout=10s CMD ["ash", "-c", "/scripts/healthcheck.sh"]
 
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
