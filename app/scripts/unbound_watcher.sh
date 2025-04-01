@@ -1,17 +1,29 @@
 #!/bin/ash
 if [ -z "$DOMAIN" ]; then
-	DOMAIN=local;
+	DOMAIN=home;
 fi
-WATCHER="/usr/local/sbin/unbound_watcher.py"
 
-if [ "${DHCPSERVER}" == "dnsmasq" ]; then
-	WATCHER="/usr/local/sbin/unbound_dnsmasq_watcher.py"
+if [ -z "$DHCPSERVER" ]; then
+	echo "No DHCP server defined. Keeping the process running but doing nothing..."
+    while true; do
+        sleep 3600  # Sleep for 1 hour to keep the process alive
+	done
+elif [ "${DHCPSERVER}" == "dhcpd" ]; then
+	WATCHER="/dhcp_watcher/unbound_dhcpd_watcher.py"
+elif [ "${DHCPSERVER}" == "dnsmasq" ]; then
+	WATCHER="/dhcp_watcher/unbound_dnsmasq_watcher.py"
 elif [ "${DHCPSERVER}" == "kea" ]; then
-	WATCHER="/usr/local/sbin/unbound_kea_watcher.py"
+	WATCHER="/dhcp_watcher/unbound_kea_watcher.py"
+elif [ "${DHCPSERVER}" == "systemd-networkd" ]; then
+	WATCHER="/dhcp_watcher/unbound_systemd_networkd_watcher.py"
+else
+	echo "Unknown DHCP server type: ${DHCPSERVER}. Exiting..."
+	exit 1
 fi
 
-if [ ! -f '/dhcp.leases' ]; then
-	echo "Leases file /dhcp.leases not found. Exiting..."
+
+if [ ! -e '/dhcp.leases' ]; then
+	echo "Leases file or folder /dhcp.leases not found. Exiting..."
 	exit 1
 fi
 

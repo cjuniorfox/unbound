@@ -1,3 +1,4 @@
+#/bin/ash
 unbound-control-setup
 #Downloading opensense scripts
 mkdir /usr/local/opnsense/site-python/watchers -p
