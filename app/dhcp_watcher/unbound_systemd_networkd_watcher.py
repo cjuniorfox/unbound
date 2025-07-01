@@ -64,7 +64,7 @@ def parse_leases_from_file(file_path):
             leases.extend(extract_leases(data))
         logger.debug(f"Parsed leases from file: {file_path}")
     except Exception as e:
-        logger.warning(f"Failed to parse file {file_path}: {e}")
+        logger.error(f"Failed to parse file {file_path}: {e}")
     return leases
 
 
@@ -180,7 +180,7 @@ def apply_unbound_changes(dhcpd_changed, remove_rr, add_rr):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pid', help='pid file location', default='/var/run/unbound_systemd_networkd_watcher.pid')
-    parser.add_argument('--source', help='source leases directory', default='/run/systemd/netif/leases/')
+    parser.add_argument('--source', help='source leases directory', default='/var/lib/systemd/network/dhcp-server-lease/')
     parser.add_argument('--target', help='target config file, used when unbound restarts', default='/var/unbound/dhcpleases.conf')
     parser.add_argument('--domain', help='default domain to use', default=DEFAULT_DOMAIN)
     parser.add_argument('--foreground', help='run in foreground', default=False, action='store_true')
