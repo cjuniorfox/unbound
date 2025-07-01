@@ -10,7 +10,7 @@ from datetime import timedelta
 import json
 from daemonize import Daemonize
 
-DEFAULT_DOMAIN = 'local'
+DEFAULT_DOMAIN = 'lan'
 CLEANUP_INTERVAL = 60  # seconds
 
 # Set up logging
