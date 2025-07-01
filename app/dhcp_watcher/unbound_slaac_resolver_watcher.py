@@ -89,8 +89,8 @@ def extract_leases(data):
             logger.warning(f"Missing expected key in lease data: {e}")
     return leases
 
-def run_watcher(target_filename, default_domain, watch_dir_or_file):
-    logger.info(f"Starting watcher with target_filename={target_filename}, default_domain={default_domain}, watch_directory={watch_dir_or_file}")
+def run_watcher(default_domain, watch_dir_or_file):
+    logger.info(f"Starting watcher default_domain={default_domain}, watch_directory={watch_dir_or_file}")
     unbound_local_data = UnboundLocalData()
     cached_leases = {}
 
@@ -178,7 +178,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pid', help='pid file location', default='/var/run/unbound_systemd_networkd_watcher.pid')
     parser.add_argument('--source', help='source leases directory', default='/run/systemd/netif/leases/')
-    parser.add_argument('--target', help='target config file, used when unbound restarts', default='/var/unbound/dhcpleases.conf')
     parser.add_argument('--domain', help='default domain to use', default=DEFAULT_DOMAIN)
     parser.add_argument('--foreground', help='run in foreground', default=False, action='store_true')
     parser.add_argument('--log-level', help='set the logging level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
@@ -191,10 +190,10 @@ if __name__ == '__main__':
     logger.info(f"Starting unbound_systemd_networkd_watcher with arguments: {vars(inputargs)}")
     if inputargs.foreground:
         logger.info("Running in foreground mode")
-        run_watcher(target_filename=inputargs.target, default_domain=inputargs.domain, watch_dir_or_file=inputargs.source)
+        run_watcher(default_domain=inputargs.domain, watch_dir_or_file=inputargs.source)
     else:
         logger.info("Running in daemon mode")
         syslog.syslog(syslog.LOG_NOTICE, 'daemonize unbound systemd-networkd watcher.')
-        cmd = lambda: run_watcher(target_filename=inputargs.target, default_domain=inputargs.domain, watch_dir_or_file=inputargs.source)
+        cmd = lambda: run_watcher(default_domain=inputargs.domain, watch_dir_or_file=inputargs.source)
         daemon = Daemonize(app="unbound_systemd_networkd_watcher", pid=inputargs.pid, action=cmd)
         daemon.start()
