@@ -62,7 +62,7 @@ def parse_leases_from_file(file_path):
             leases.extend(extract_leases(data))
         logger.debug(f"Parsed leases from file: {file_path}")
     except Exception as e:
-        logger.warning(f"Failed to parse file {file_path}: {e}")
+        logger.error(f"Failed to parse file {file_path}: {e}")
     return leases
 
 
@@ -79,7 +79,7 @@ def parse_leases_from_directory(directory_path):
 def extract_leases(data):
     """Extract lease information from JSON data."""
     leases = []
-    for lease in data.get('Leases', []):
+    for lease in data:
         try:
             leases.append({
                 'address': ':'.join(map(str, lease['Address'])),
@@ -176,8 +176,8 @@ def apply_unbound_changes(dhcpd_changed, remove_rr, add_rr):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pid', help='pid file location', default='/var/run/unbound_systemd_networkd_watcher.pid')
-    parser.add_argument('--source', help='source leases directory', default='/run/systemd/netif/leases/')
+    parser.add_argument('--pid', help='pid file location', default='/var/run/unbound_slaac_resolver_watcher.pid')
+    parser.add_argument('--source', help='source leases directory', default='/run/slaac-resolver/')
     parser.add_argument('--domain', help='default domain to use', default=DEFAULT_DOMAIN)
     parser.add_argument('--foreground', help='run in foreground', default=False, action='store_true')
     parser.add_argument('--log-level', help='set the logging level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
