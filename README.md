@@ -108,7 +108,6 @@ podman run -d \
   - `dnsmasq`
   - `systemd-networkd`
 
-
 ### Notes about DHCPSERVER
 
 - If the `DHCPSERVER` variable is not set, the container will print the following message and remain idle:
@@ -229,8 +228,8 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
        --env DOMAIN=juniorfox.net \
        --env DHCPSERVER=dhcpd \
        --env SLAAC_RESOLVER=slaac-resolver \
-       --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
        --volume /run/slaac-resolver:/slaac-resolver \
+       --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
        --volume $(pwd)/unbound-conf:/unbound-conf \
        --volume certificates:/etc/certificates/ \
        docker.io/cjuniorfox/unbound:latest
@@ -244,8 +243,8 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
        --restart always \
        --env DOMAIN=juniorfox.net \
        --env DHCPSERVER=dhcpd \
-       --env SLAAC_RESOLVER=slaac-resolver \
        --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
+       --env SLAAC_RESOLVER=slaac-resolver \
        --volume /run/slaac-resolver:/slaac-resolver
        --volume $(pwd)/unbound-conf:/unbound-conf \
        --volume certificates:/etc/certificates/ \
