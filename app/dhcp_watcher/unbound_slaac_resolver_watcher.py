@@ -35,7 +35,7 @@ def unbound_control(commands, input=None):
     input_string = None
     if input:
         input_string = '\n'.join(input) + '\n'
-    logger.debug(f"Executing unbound-control command: {commands}")
+    logger.debug(f"Executing unbound-control command: {commands} with input: {input_string}")
     result = subprocess.run(['/usr/sbin/unbound-control'] + commands, input=input_string, text=True, capture_output=True)
     logger.debug(f"unbound-control output: {result.stdout}")
     if result.stderr:
