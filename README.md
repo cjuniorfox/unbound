@@ -7,12 +7,30 @@ This repository contains the necessary files to build and run an Unbound DNS ser
 - [Overview](#overview)
 - [Dockerfile](#dockerfile)
 - [Podman Setup](#podman-setup)
+  - [Steps to Run with Podman](#steps-to-run-with-podman)
+    - [Create the Pod and Network](#1-create-the-pod-and-network)
+    - [Run the Container](#2-run-the-container)
+    - [Notes about DHCPSERVER](#notes-about-dhcpserver)
+    - [IPv6 Name Resolution](#ipv6-name-resolution)
+    - [Firewall Configuration (Optional)](#3-firewall-configuration-optional)
 - [Kubernetes Setup](#kubernetes-setup)
+  - [Steps to Deploy with Kubernetes](#steps-to-deploy-with-kubernetes)
+    - [Apply the Pod and Network Configuration](#1-apply-the-pod-and-network-configuration)
+    - [Verify the Pod](#2-verify-the-pod)
+    - [Access the DNS Server](#3-access-the-dns-server)
 - [Using the Docker Images](#using-the-docker-images)
+  - [Note about the image](#note-about-the-image)
+  - [Pulling from GHCR](#pulling-from-ghcr)
+  - [Authentication for GHCR](#authentication-for-ghcr)
+  - [Pulling the Images](#pulling-the-images)
+  - [Running the Images](#running-the-images)
+  - [Notes](#notes)
 - [Volumes](#volumes)
 - [Healthcheck](#healthcheck)
 - [Troubleshooting](#troubleshooting)
+  - [Docker Daemon Not Running](#docker-daemon-not-running)
 - [Testing](#testing)
+  - [Running the Tests](#running-the-tests)
 - [Changelog](#changelog)
 
 ## Overview
@@ -74,8 +92,10 @@ podman run -d \
     --restart always \
     --env DOMAIN=juniorfox.net \
     --env DHCPSERVER=dhcpd \
+    --env SLAAC_RESOLVER=slaac-resolver \
     --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
     --volume $(pwd)/unbound-conf:/unbound-conf \
+    --volume /run/slaac-resolver:/slaac-resolver
     --volume certificates:/etc/certificates/ \
     cjuniorfox/unbound:1.20.0 
 ```
@@ -97,6 +117,12 @@ podman run -d \
   ```
 
 - Ensure that the `/dhcp.leases` file or directory is correctly mounted and accessible by the container.
+
+### IPv6 Name Resolution
+
+IPv6 name resolution can be achieved using a **SLAAC watcher**.
+
+- **SLAAC_RESOLVER** refers to the IPv6 SLAAC watcher used for name resolution. Currently, the only supported option is [slaac-resolver](https://github.com/cjuniorfox/slaac-resolver).
 
 ---
 
@@ -201,6 +227,8 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
        --restart always \
        --env DOMAIN=juniorfox.net \
        --env DHCPSERVER=dhcpd \
+       --env SLAAC_RESOLVER=slaac-resolver \
+       --volume /run/slaac-resolver:/slaac-resolver \
        --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
        --volume $(pwd)/unbound-conf:/unbound-conf \
        --volume certificates:/etc/certificates/ \
@@ -216,6 +244,8 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
        --env DOMAIN=juniorfox.net \
        --env DHCPSERVER=dhcpd \
        --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
+       --env SLAAC_RESOLVER=slaac-resolver \
+       --volume /run/slaac-resolver:/slaac-resolver
        --volume $(pwd)/unbound-conf:/unbound-conf \
        --volume certificates:/etc/certificates/ \
        docker.io/cjuniorfox/unbound:developer
@@ -232,6 +262,7 @@ The following volumes are used in the container:
 - **`/unbound-conf`**: Custom Unbound configuration files.
 - **`/etc/unbound/unbound.conf.d/`**: Additional Unbound configuration files.
 - **`/dhcp.leases`**: DHCP leases file or directory.
+- **`/slaac-resolver`**: The directory containing the SLAAC name resolution files.
 - **Persistent Volume Claims (PVC)**:
   - `certificates-pvc`: Mounted at `/etc/certificates/`.
   - `unbound-conf-pvc`: Mounted at `/etc/unbound/unbound.conf.d/`.
@@ -297,6 +328,10 @@ Unit tests are included to validate the functionality of the Unbound watcher scr
    ```
 
 ## Changelog
+
+### 2025-07-01
+
+- Added support for **SLAAC Name resolution** Watcher.
 
 ### 2025-03-30
 

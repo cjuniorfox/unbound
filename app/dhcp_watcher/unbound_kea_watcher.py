@@ -12,7 +12,7 @@ sys.path.insert(0, "/usr/local/opnsense/site-python")
 from daemonize import Daemonize
 
 KEA_LEASES_FILE = '/var/lib/kea/dhcp4.leases'
-DEFAULT_DOMAIN = 'local'
+DEFAULT_DOMAIN = 'lan'
 CLEANUP_INTERVAL = 60  # seconds
 
 # Set up logging
