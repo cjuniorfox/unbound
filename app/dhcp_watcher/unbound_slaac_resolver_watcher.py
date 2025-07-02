@@ -69,9 +69,9 @@ def parse_leases_from_file(file_path):
 def parse_leases_from_directory(directory_path):
     """Parse leases from all files in a directory."""
     leases = []
-    for filename in os.listdir(directory_path):
+    for filename in os.listdir(directory_path) :
         file_path = os.path.join(directory_path, filename)
-        if os.path.isfile(file_path):
+        if os.path.isfile(file_path) and filename.endswith('.json'):
             leases.extend(parse_leases_from_file(file_path))
     return leases
 
