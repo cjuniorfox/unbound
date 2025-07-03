@@ -151,7 +151,8 @@ def cleanup_missing_leases(cached_leases, active_addresses, unbound_local_data, 
     """Clean up expired or missing leases."""
     dhcpd_changed = False
 
-    for address in cached_leases:
+
+    for address in list(cached_leases):
         if address not in active_addresses:
             logger.info(f"Lease no longer exists: {address}")
             fqdn = f"{cached_leases[address]['hostname']}.{default_domain}"
