@@ -245,7 +245,7 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
        --env DHCPSERVER=dhcpd \
        --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
        --env IPV6_WATCHER=slaac-resolver \
-       --volume /run/slaac-resolver:/ipv6-watcher
+       --volume /run/slaac-resolver:/ipv6-watcher \
        --volume $(pwd)/unbound-conf:/unbound-conf \
        --volume certificates:/etc/certificates/ \
        docker.io/cjuniorfox/unbound:developer
