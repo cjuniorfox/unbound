@@ -21,7 +21,7 @@ COPY healthcheck.sh /scripts/healthcheck.sh
 COPY scripts/ad-blocking.sh /scripts/ad-blocking.sh
 
 COPY scripts/unbound_watcher.sh /scripts/unbound_watcher.sh
-COPY scripts/unbound_ipv6_slaac_resolver.sh /scripts/unbound_ipv6_slaac_resolver.sh
+COPY scripts/ipv6_watcher.sh /scripts/ipv6_watcher.sh
 COPY dhcp_watcher/unbound_dhcpd_watcher.py /dhcp_watcher/unbound_dhcpd_watcher.py
 COPY dhcp_watcher/unbound_dnsmasq_watcher.py /dhcp_watcher/unbound_dnsmasq_watcher.py
 COPY dhcp_watcher/unbound_kea_watcher.py /dhcp_watcher/unbound_kea_watcher.py

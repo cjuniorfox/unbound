@@ -92,10 +92,10 @@ podman run -d \
     --restart always \
     --env DOMAIN=juniorfox.net \
     --env DHCPSERVER=dhcpd \
-    --env SLAAC_RESOLVER=slaac-resolver \
+    --env IPV6_WATCHER=slaac-resolver \
     --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
     --volume $(pwd)/unbound-conf:/unbound-conf \
-    --volume /run/slaac-resolver:/slaac-resolver
+    --volume /run/slaac-resolver:/ipv6-watcher \
     --volume certificates:/etc/certificates/ \
     cjuniorfox/unbound:1.20.0 
 ```
@@ -120,9 +120,9 @@ podman run -d \
 
 ### IPv6 Name Resolution
 
-IPv6 name resolution can be achieved using a **SLAAC watcher**.
+IPv6 name resolution can be achieved using a **IPv6 watcher**.
 
-- **SLAAC_RESOLVER** refers to the IPv6 SLAAC watcher used for name resolution. Currently, the only supported option is [slaac-resolver](https://github.com/cjuniorfox/slaac-resolver).
+- **IPV6_WATCHER** refers to the IPv6 SLAAC watcher used for name resolution. Currently, the only supported option is [slaac-resolver](https://github.com/cjuniorfox/slaac-resolver).
 
 ---
 
@@ -227,8 +227,8 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
        --restart always \
        --env DOMAIN=juniorfox.net \
        --env DHCPSERVER=dhcpd \
-       --env SLAAC_RESOLVER=slaac-resolver \
-       --volume /run/slaac-resolver:/slaac-resolver \
+       --env IPV6_WATCHER=slaac-resolver \
+       --volume /run/slaac-resolver:/ipv6-watcher \
        --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
        --volume $(pwd)/unbound-conf:/unbound-conf \
        --volume certificates:/etc/certificates/ \
@@ -244,8 +244,8 @@ echo $GITHUB_TOKEN | docker login ghcr.io -u <username> --password-stdin
        --env DOMAIN=juniorfox.net \
        --env DHCPSERVER=dhcpd \
        --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
-       --env SLAAC_RESOLVER=slaac-resolver \
-       --volume /run/slaac-resolver:/slaac-resolver
+       --env IPV6_WATCHER=slaac-resolver \
+       --volume /run/slaac-resolver:/ipv6-watcher
        --volume $(pwd)/unbound-conf:/unbound-conf \
        --volume certificates:/etc/certificates/ \
        docker.io/cjuniorfox/unbound:developer
@@ -262,7 +262,7 @@ The following volumes are used in the container:
 - **`/unbound-conf`**: Custom Unbound configuration files.
 - **`/etc/unbound/unbound.conf.d/`**: Additional Unbound configuration files.
 - **`/dhcp.leases`**: DHCP leases file or directory.
-- **`/slaac-resolver`**: The directory containing the SLAAC name resolution files.
+- **`/ipv6-watcher`**: The directory containing the IPV6 name resolution files.
 - **Persistent Volume Claims (PVC)**:
   - `certificates-pvc`: Mounted at `/etc/certificates/`.
   - `unbound-conf-pvc`: Mounted at `/etc/unbound/unbound.conf.d/`.
@@ -331,7 +331,7 @@ Unit tests are included to validate the functionality of the Unbound watcher scr
 
 ### 2025-07-01
 
-- Added support for **SLAAC Name resolution** Watcher.
+- Added support for **IPV6 Name resolution** Watcher.
 
 ### 2025-03-30
 
