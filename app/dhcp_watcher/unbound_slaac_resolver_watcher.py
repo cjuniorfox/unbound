@@ -53,16 +53,16 @@ def parse_slaac_leases(dir_or_file):
     return leases
 
 
-def parse_leases_from_file(file_path):
+def parse_leases_from_file(file):
     """Parse leases from a single file."""
     leases = []
     try:
-        with open(file_path, 'r') as f:
+        with open(file, 'r') as f:
             data = json.load(f)
-            leases.extend(extract_leases(data))
-        logger.debug(f"Parsed leases from file: {file_path}")
+            leases.extend(extract_leases(data,file))
+        logger.debug(f"Parsed leases from file: {file}")
     except Exception as e:
-        logger.error(f"Failed to parse file {file_path}: {e}")
+        logger.error(f"Failed to parse file {file}: {e}")
     return leases
 
 
@@ -76,14 +76,16 @@ def parse_leases_from_directory(directory_path):
     return leases
 
 
-def extract_leases(data):
+def extract_leases(data, file):
     """Extract lease information from JSON data."""
     leases = []
+    filename = os.path.splitext(os.path.basename(file))[0]
     for lease in data:
         try:
             leases.append({
                 'address': ':'.join(map(str, lease['Address'])),
-                'hostname': lease.get('Hostname', '')
+                'hostname': lease.get('Hostname', ''),
+                'lease': filename,
             })
         except KeyError as e:
             logger.warning(f"Missing expected key in lease data: {e}")
@@ -122,44 +124,56 @@ def process_leases(leases, cached_leases, unbound_local_data, default_domain):
     remove_rr = []
     add_rr = []
 
+    # Key: (hostname, lease), Value: address
+    current_keys = set()
     for lease in leases:
-        if lease['hostname'] and lease['address']:
+        if lease['hostname'] and lease['address'] and lease.get('lease'):
+            key = (lease['hostname'], lease['lease'])
+            current_keys.add(key)
             address = ipaddress.ip_address(lease['address'])
             fqdn = f"{lease['hostname']}.{default_domain}"
-            logger.debug(f"Processing lease: address={address}, hostname={lease['hostname']}")
 
             # Check if the lease is new or has changed
-            if lease['address'] not in cached_leases or cached_leases[lease['address']] != lease:
-                cached_leases[lease['address']] = lease
+            if key not in cached_leases or cached_leases[key]['address'] != lease['address']:
+                # If changed, remove old PTR/AAAA for this (hostname, lease) pair
+                if key in cached_leases:
+                    old_address = ipaddress.ip_address(cached_leases[key]['address'])
+                    remove_rr.append(f"{old_address.reverse_pointer}")
+                    remove_rr.append(f"{fqdn}")
+                    unbound_local_data.cleanup(cached_leases[key]['address'], fqdn)
+                cached_leases[key] = lease
                 dhcpd_changed = True
                 logger.debug(f"Lease added/updated: {lease}")
 
-            # Update Unbound if necessary
+            # Add new PTR/AAAA if not already present in UnboundLocalData
             if not unbound_local_data.is_equal(lease['address'], fqdn):
                 logger.info(f"Updating Unbound for {address} {fqdn}")
-                remove_rr.append(f"{address.reverse_pointer}")
-                remove_rr.append(f"{fqdn}")
-                unbound_local_data.cleanup(lease['address'], fqdn)
                 add_rr.append(f"{address.reverse_pointer} PTR {fqdn}")
                 add_rr.append(f"{fqdn} IN AAAA {lease['address']}")
                 unbound_local_data.add_address(lease['address'], fqdn)
 
     return dhcpd_changed, remove_rr, add_rr
 
-
 def cleanup_missing_leases(cached_leases, active_addresses, unbound_local_data, remove_rr, default_domain):
     """Clean up expired or missing leases."""
     dhcpd_changed = False
 
+    # Build set of active (hostname, lease) keys from active_addresses
+    active_keys = set()
+    for key, lease in cached_leases.items():
+        if lease['address'] in active_addresses:
+            active_keys.add(key)
 
-    for address in list(cached_leases):
-        if address not in active_addresses:
-            logger.info(f"Lease no longer exists: {address}")
-            fqdn = f"{cached_leases[address]['hostname']}.{default_domain}"
-            remove_rr.append(f"{ipaddress.ip_address(address).reverse_pointer}")
+    for key in list(cached_leases):
+        lease = cached_leases[key]
+        if lease['address'] not in active_addresses:
+            fqdn = f"{lease['hostname']}.{default_domain}"
+            logger.info(f"Lease no longer exists: {lease['address']} ({key})")
+            address = ipaddress.ip_address(lease['address'])
+            remove_rr.append(f"{address.reverse_pointer}")
             remove_rr.append(f"{fqdn}")
-            unbound_local_data.cleanup(address, fqdn)
-            del cached_leases[address]
+            unbound_local_data.cleanup(lease['address'], fqdn)
+            del cached_leases[key]
             dhcpd_changed = True
 
     return dhcpd_changed
