@@ -117,35 +117,34 @@ def run_watcher(default_domain, watch_dir_or_file):
         # Sleep before the next iteration
         time.sleep(5)
 
-
 def process_leases(leases, cached_leases, unbound_local_data, default_domain):
-    """Process new or updated leases."""
     dhcpd_changed = False
     remove_rr = []
     add_rr = []
 
-    # Key: (hostname, lease), Value: address
-    current_keys = set()
     for lease in leases:
         if lease['hostname'] and lease['address'] and lease.get('lease'):
             key = (lease['hostname'], lease['lease'])
-            current_keys.add(key)
             address = ipaddress.ip_address(lease['address'])
             fqdn = f"{lease['hostname']}.{default_domain}"
 
-            # Check if the lease is new or has changed
-            if key not in cached_leases or cached_leases[key]['address'] != lease['address']:
-                # If changed, remove old PTR/AAAA for this (hostname, lease) pair
-                if key in cached_leases:
-                    old_address = ipaddress.ip_address(cached_leases[key]['address'])
+            # Only update if the address or fqdn has changed
+            prev_lease = cached_leases.get(key)
+            prev_address = prev_lease['address'] if prev_lease else None
+            prev_fqdn = f"{lease['hostname']}.{default_domain}" if prev_lease else None
+
+            # Only if the address changed for this (hostname, lease) pair
+            if prev_address != lease['address']:
+                if prev_lease:
+                    old_address = ipaddress.ip_address(prev_address)
                     remove_rr.append(f"{old_address.reverse_pointer}")
                     remove_rr.append(f"{fqdn}")
-                    unbound_local_data.cleanup(cached_leases[key]['address'], fqdn)
+                    unbound_local_data.cleanup(prev_address, fqdn)
                 cached_leases[key] = lease
                 dhcpd_changed = True
                 logger.debug(f"Lease added/updated: {lease}")
 
-            # Add new PTR/AAAA if not already present in UnboundLocalData
+            # Only add if not already present in UnboundLocalData
             if not unbound_local_data.is_equal(lease['address'], fqdn):
                 logger.info(f"Updating Unbound for {address} {fqdn}")
                 add_rr.append(f"{address.reverse_pointer} PTR {fqdn}")
