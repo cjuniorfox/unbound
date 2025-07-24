@@ -122,25 +122,23 @@ def process_leases(leases, cached_leases, unbound_local_data, default_domain):
     remove_rr = []
     add_rr = []
 
+    # Use (hostname, address) as the unique key
+    seen = set()
     for lease in leases:
-        if lease['hostname'] and lease['address'] and lease.get('lease'):
-            key = (lease['hostname'], lease['lease'])
-            address = ipaddress.ip_address(lease['address'])
+        if lease['hostname'] and lease['address']:
+            key = (lease['hostname'], lease['address'])
+            if key in seen:
+                continue  # skip duplicates from other files
+            seen.add(key)
             fqdn = f"{lease['hostname']}.{default_domain}"
+            address = ipaddress.ip_address(lease['address'])
 
             prev_lease = cached_leases.get(key)
-            prev_address = prev_lease['address'] if prev_lease else None
-
-            # Only if the address changed for this (hostname, lease) pair
-            if prev_address != lease['address']:
-                if prev_lease:
-                    old_address = ipaddress.ip_address(prev_address)
-                    remove_rr.append(f"{old_address.reverse_pointer}")
-                    remove_rr.append(f"{fqdn}")
-                    unbound_local_data.cleanup(prev_address, fqdn)
-                cached_leases[key] = {'address': lease['address'], 'hostname': lease['hostname'], 'lease': lease['lease']}
+            # Only if this (hostname, address) is new
+            if not prev_lease:
+                cached_leases[key] = lease
                 dhcpd_changed = True
-                logger.debug(f"Lease added/updated: {lease}")
+                logger.debug(f"Lease added: {lease}")
 
             # Only add if not already present in UnboundLocalData
             if not unbound_local_data.is_equal(lease['address'], fqdn):
@@ -148,6 +146,19 @@ def process_leases(leases, cached_leases, unbound_local_data, default_domain):
                 add_rr.append(f"{address.reverse_pointer} PTR {fqdn}")
                 add_rr.append(f"{fqdn} IN AAAA {lease['address']}")
                 unbound_local_data.add_address(lease['address'], fqdn)
+
+    # Remove any cached_leases that are no longer present
+    for key in list(cached_leases):
+        if key not in seen:
+            lease = cached_leases[key]
+            fqdn = f"{lease['hostname']}.{default_domain}"
+            address = ipaddress.ip_address(lease['address'])
+            logger.info(f"Lease no longer exists: {lease['address']} ({key})")
+            remove_rr.append(f"{address.reverse_pointer}")
+            remove_rr.append(f"{fqdn}")
+            unbound_local_data.cleanup(lease['address'], fqdn)
+            del cached_leases[key]
+            dhcpd_changed = True
 
     return dhcpd_changed, remove_rr, add_rr
 
