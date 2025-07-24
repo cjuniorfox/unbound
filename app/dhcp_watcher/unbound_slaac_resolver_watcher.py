@@ -128,10 +128,8 @@ def process_leases(leases, cached_leases, unbound_local_data, default_domain):
             address = ipaddress.ip_address(lease['address'])
             fqdn = f"{lease['hostname']}.{default_domain}"
 
-            # Only update if the address or fqdn has changed
             prev_lease = cached_leases.get(key)
             prev_address = prev_lease['address'] if prev_lease else None
-            prev_fqdn = f"{lease['hostname']}.{default_domain}" if prev_lease else None
 
             # Only if the address changed for this (hostname, lease) pair
             if prev_address != lease['address']:
@@ -140,7 +138,7 @@ def process_leases(leases, cached_leases, unbound_local_data, default_domain):
                     remove_rr.append(f"{old_address.reverse_pointer}")
                     remove_rr.append(f"{fqdn}")
                     unbound_local_data.cleanup(prev_address, fqdn)
-                cached_leases[key] = lease
+                cached_leases[key] = {'address': lease['address'], 'hostname': lease['hostname'], 'lease': lease['lease']}
                 dhcpd_changed = True
                 logger.debug(f"Lease added/updated: {lease}")
 
