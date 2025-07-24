@@ -106,11 +106,6 @@ def run_watcher(default_domain, watch_dir_or_file):
             leases, cached_leases, unbound_local_data, default_domain
         )
 
-        # Handle missing leases
-        dhcpd_changed |= cleanup_missing_leases(
-            cached_leases, active_addresses, unbound_local_data, remove_rr, default_domain
-        )
-
         # Apply changes to Unbound
         apply_unbound_changes(dhcpd_changed, remove_rr, add_rr)
 
