@@ -1,11 +1,10 @@
 FROM alpine:3.21
 
 # Install unbound and other dependencies
-RUN apk add --update bind-tools openssl py-daemonize python3 supervisor unbound  wget && \
+RUN apk add --update bind-tools openssl py-daemonize py-watchdog python3 supervisor unbound  wget && \
     rm -rf /var/cache/apk/* && \
     mkdir -p /etc/unbound/unbound.conf.d && \
-    mkdir -p /scripts && \
-    pip3 install --no-cache-dir watchdog
+    mkdir -p /scripts
 
 ENV DOMAIN="home"
 
