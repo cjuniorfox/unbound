@@ -9,7 +9,7 @@ if [ -z "$IPV6_WATCHER" ]; then
         sleep 3600  # Sleep for 1 hour to keep the process alive
 	done
 elif [ "${IPV6_WATCHER}" == "slaac-resolver" ]; then
-	WATCHER="/dhcp_watcher/unbound_slaac_resolver_watcher.py"
+	WATCHER="/dhcp_watcher/slaac_resolver_watcher.py"
 else
 	echo "Unknown SLAAC Watcher type: ${IPV6_WATCHER}. Exiting..."
 	exit 1
@@ -22,6 +22,6 @@ if [ ! -e '/ipv6-watcher' ]; then
 fi
 
 python3 ${WATCHER} \
-	--foreground --source /ipv6-watcher \
+	--source /ipv6-watcher \
 	--domain $DOMAIN \
 	--log-level ${DHCP_LOG_LEVEL}

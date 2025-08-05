@@ -1,7 +1,7 @@
 FROM alpine:3.21
 
 # Install unbound and other dependencies
-RUN apk add --update bind-tools openssl py-daemonize python3 supervisor unbound  wget && \
+RUN apk add --update bind-tools openssl py-daemonize py-watchdog python3 supervisor unbound  wget && \
     rm -rf /var/cache/apk/* && \
     mkdir -p /etc/unbound/unbound.conf.d && \
     mkdir -p /scripts
@@ -26,7 +26,7 @@ COPY dhcp_watcher/unbound_dhcpd_watcher.py /dhcp_watcher/unbound_dhcpd_watcher.p
 COPY dhcp_watcher/unbound_dnsmasq_watcher.py /dhcp_watcher/unbound_dnsmasq_watcher.py
 COPY dhcp_watcher/unbound_kea_watcher.py /dhcp_watcher/unbound_kea_watcher.py
 COPY dhcp_watcher/unbound_systemd_networkd_watcher.py /dhcp_watcher/unbound_systemd_networkd_watcher.py
-COPY dhcp_watcher/unbound_slaac_resolver_watcher.py /dhcp_watcher/unbound_slaac_resolver_watcher.py
+COPY dhcp_watcher/slaac_resolver_watcher.py /dhcp_watcher/slaac_resolver_watcher.py
 RUN /setup.sh
 
 EXPOSE 53/UDP
