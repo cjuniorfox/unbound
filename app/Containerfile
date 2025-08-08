@@ -1,0 +1,48 @@
+FROM alpine:3.21
+
+# Install unbound and dependencies
+RUN apk add --update bind-tools openssl py-daemonize py-watchdog python3 supervisor unbound wget \
+    && rm -rf /var/cache/apk/* \
+    && mkdir -p /etc/unbound/unbound.conf.d /scripts /dhcp_watcher
+
+ENV DOMAIN=home
+ENV PORT=53
+# The TLS port is not being used at the default conf. Just for documentation purpose
+ENV TLS_PORT=853
+ENV DHCP_LOG_LEVEL=INFO
+
+VOLUME ["/unbound-conf/"]
+
+# Unbound main config includes
+RUN echo 'include-toplevel: "/etc/unbound/unbound.conf.d/*.conf"\ninclude-toplevel: "/unbound-conf/*.conf"' \
+  > /etc/unbound/unbound.conf
+
+# Supervisor
+COPY etc/supervisord.conf /etc/supervisord.conf
+
+COPY etc/unbound/unbound.conf.d/* /template-conf/
+
+# Scripts
+COPY setup.sh /setup.sh
+COPY healthcheck.sh /scripts/healthcheck.sh
+COPY scripts/ad-blocking.sh /scripts/ad-blocking.sh
+COPY scripts/unbound_watcher.sh /scripts/unbound_watcher.sh
+COPY scripts/ipv6_watcher.sh /scripts/ipv6_watcher.sh
+
+# DHCP Watchers
+COPY dhcp_watcher/*.py /dhcp_watcher/
+
+# Make scripts executable
+RUN chmod +x /scripts/*.sh /setup.sh
+
+# Expose DNS and DoT ports
+EXPOSE 53/udp
+
+# Healthcheck (runtime variable expansion)
+HEALTHCHECK --start-period=60s --interval=120s --timeout=10s \
+  CMD ash -c "/scripts/healthcheck.sh ${PORT}"
+
+# Entrypoint that runs setup + supervisord
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]

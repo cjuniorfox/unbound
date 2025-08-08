@@ -47,9 +47,7 @@ The `Dockerfile` is used to build the Unbound DNS server container. It installs 
 - **Installed Packages**: Unbound, OpenSSL, Python3, Bind-tools, Supervisor
 - **Volumes**:
   - `/unbound-conf`: Custom Unbound configuration files
-  - `/etc/unbound/unbound.conf.d/`: Additional Unbound configuration
   - `/dhcp.leases`: DHCP leases file or directory
-  - `/etc/certificates`: TLS certificates files for TLS-enabled DNS server
 - **Healthcheck**: Ensures that Unbound is running correctly by querying `google.com`.
 
 ### Build the Docker Image
@@ -90,9 +88,11 @@ podman run -d \
     --pod unbound-pod \
     --name unbound-server \
     --restart always \
+    --network host \
     --env DOMAIN=juniorfox.net \
     --env DHCPSERVER=dhcpd \
     --env IPV6_WATCHER=slaac-resolver \
+    --env PORT=53 \
     --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
     --volume $(pwd)/unbound-conf:/unbound-conf \
     --volume /run/slaac-resolver:/ipv6-watcher \
@@ -100,6 +100,7 @@ podman run -d \
     cjuniorfox/unbound:1.20.0 
 ```
 
+- **PORT** the port were Unbound will serve. The default value is 53. Useful when using `network=host`.
 - **DOMAIN** is the domain defined as the `search domains`.
 - **DHCPSERVER** is the name of the DHCP server. It is used to retrieve DHCP leases. Can be:
 
