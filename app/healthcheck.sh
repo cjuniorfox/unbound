@@ -1,2 +1,4 @@
-#/bin/ash
-dig @127.0.0.1 google.com | grep "status: NOERROR" || exit 1
+#!/bin/ash
+PORT=$1
+PORT="${PORT:-53}"
+dig @localhost -p "$PORT" google.com | grep "status: NOERROR" > /dev/null || exit 1

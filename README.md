@@ -12,7 +12,8 @@ This repository contains the necessary files to build and run an Unbound DNS ser
     - [Run the Container](#2-run-the-container)
     - [Notes about DHCPSERVER](#notes-about-dhcpserver)
     - [IPv6 Name Resolution](#ipv6-name-resolution)
-    - [Firewall Configuration (Optional)](#3-firewall-configuration-optional)
+- [TLS Support (DNS-over-TLS)](#tls-support-dns-over-tls)
+- [Firewall Configuration (Optional)](#firewall-configuration-optional)
 - [Kubernetes Setup](#kubernetes-setup)
   - [Steps to Deploy with Kubernetes](#steps-to-deploy-with-kubernetes)
     - [Apply the Pod and Network Configuration](#1-apply-the-pod-and-network-configuration)
@@ -47,9 +48,7 @@ The `Dockerfile` is used to build the Unbound DNS server container. It installs 
 - **Installed Packages**: Unbound, OpenSSL, Python3, Bind-tools, Supervisor
 - **Volumes**:
   - `/unbound-conf`: Custom Unbound configuration files
-  - `/etc/unbound/unbound.conf.d/`: Additional Unbound configuration
   - `/dhcp.leases`: DHCP leases file or directory
-  - `/etc/certificates`: TLS certificates files for TLS-enabled DNS server
 - **Healthcheck**: Ensures that Unbound is running correctly by querying `google.com`.
 
 ### Build the Docker Image
@@ -90,9 +89,11 @@ podman run -d \
     --pod unbound-pod \
     --name unbound-server \
     --restart always \
+    --network host \
     --env DOMAIN=juniorfox.net \
     --env DHCPSERVER=dhcpd \
     --env IPV6_WATCHER=slaac-resolver \
+    --env PORT=53 \
     --volume /var/lib/dhcp/dhcpd.leases:/dhcp.leases \
     --volume $(pwd)/unbound-conf:/unbound-conf \
     --volume /run/slaac-resolver:/ipv6-watcher \
@@ -100,6 +101,7 @@ podman run -d \
     cjuniorfox/unbound:1.20.0 
 ```
 
+- **PORT** the port were Unbound will serve. The default value is 53. Useful when using `network=host`.
 - **DOMAIN** is the domain defined as the `search domains`.
 - **DHCPSERVER** is the name of the DHCP server. It is used to retrieve DHCP leases. Can be:
 
@@ -126,7 +128,96 @@ IPv6 name resolution can be achieved using a **IPv6 watcher**.
 
 ---
 
-#### 3. **Firewall Configuration** (Optional)
+## TLS Support (DNS-over-TLS)
+
+This Unbound setup includes **built-in support for DNS-over-TLS (DoT)** to provide encrypted DNS resolution on port `853`. TLS support is automatically configured during container startup via the `setup.sh` script.
+
+### How It Works
+
+* By default, if **no TLS certificate and key** are provided, the container will **generate a self-signed certificate** at runtime using OpenSSL.
+* The `unbound.conf` is rendered from a template that includes TLS-specific configuration blocks, using environment variables to define:
+
+  * The port (`TLS_PORT`, default: `853`)
+  * The certificate path
+  * The private key path
+
+### Self-Signed Certificates (Default Behavior)
+
+If the following files are **not found** at container start:
+
+* `/etc/unbound/ssl/unbound_tls.crt` (certificate)
+* `/etc/unbound/ssl/unbound_tls.key` (key)
+
+Then the container will generate a self-signed certificate with:
+
+```sh
+openssl req -x509 -newkey rsa:2048 -sha256 -nodes \
+  -keyout /etc/unbound/ssl/unbound_tls.key \
+  -out /etc/unbound/ssl/unbound_tls.crt \
+  -days 365 \
+  -subj "/CN=unbound"
+```
+
+The generated certificate will allow encrypted DNS traffic but is not trusted by clients unless explicitly accepted.
+
+---
+
+### Providing Your Own TLS Certificates
+
+To use your own certificate for production, mount your certificate and key into the container and set the following environment variables:
+
+* `TLS_SERVICE_PEM`: Path to your TLS certificate file (e.g., `/etc/certificates/fullchain.pem`)
+* `TLS_SERVICE_KEY`: Path to your private key file (e.g., `/etc/certificates/privkey.pem`)
+
+Example:
+
+```sh
+--env TLS_SERVICE_PEM=/etc/certificates/fullchain.pem \
+--env TLS_SERVICE_KEY=/etc/certificates/privkey.pem \
+--volume /etc/letsencrypt/live/mydomain.com:/etc/certificates \
+```
+
+Make sure your certificate and key have appropriate file permissions (`chmod 600` on the key file is recommended).
+
+---
+
+### Verifying TLS Configuration
+
+After the container starts, you can verify that the DNS-over-TLS service is running using:
+
+```sh
+openssl s_client -connect <host_ip>:853 -servername unbound
+```
+
+You should see certificate details and a successful TLS handshake.
+
+You can also test DNS resolution via TLS with a tool like `drill` or `dig`:
+
+```sh
+drill @<host_ip> example.com +tls
+```
+
+or
+
+```sh
+dig @<host_ip> example.com +tls=openssl
+```
+
+> ⚠️ Note: Your DNS client must support DoT. Most modern systems (Android 9+, systemd-resolved, stubby, etc.) support this.
+
+---
+
+### Environment Variables
+
+| Variable          | Description                      | Default                            |
+| ----------------- | -------------------------------- | ---------------------------------- |
+| `TLS_PORT`        | Port used for DNS-over-TLS       | `853`                              |
+| `TLS_SERVICE_PEM` | Path to the TLS certificate file | `/etc/unbound/ssl/unbound_tls.crt` |
+| `TLS_SERVICE_KEY` | Path to the TLS private key file | `/etc/unbound/ssl/unbound_tls.key` |
+
+---
+
+## **Firewall Configuration** (Optional)
 
 If you want to forward DNS requests to the pod, you can configure the firewall:
 
