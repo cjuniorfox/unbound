@@ -3,7 +3,7 @@ FROM alpine:3.21
 # Install unbound and dependencies
 RUN apk add --update bind-tools openssl py-daemonize py-watchdog python3 supervisor unbound wget \
     && rm -rf /var/cache/apk/* \
-    && mkdir -p /etc/unbound/unbound.conf.d /scripts /dhcp_watcher
+    && mkdir -p /etc/unbound/unbound.conf.d /scripts /dhcp_watcher /template_conf
 
 ENV DOMAIN=home
 ENV PORT=53
@@ -19,8 +19,8 @@ RUN echo -e 'include-toplevel: "/etc/unbound/unbound.conf.d/*.conf"\ninclude-top
 
 # Supervisor
 COPY etc/supervisord.conf /etc/supervisord.conf
-
-COPY etc/unbound/unbound.conf.d/* /template-conf/
+COPY etc/unbound/unbound.conf.d/* /etc/unbound/unbound.conf.d/
+COPY template_conf/* /template_conf/
 
 # Scripts
 COPY setup.sh /setup.sh

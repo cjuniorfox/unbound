@@ -7,6 +7,15 @@ server:
 	interface: ::@{PORT}
 	port: {PORT}
 
+	#TLS
+	# Interfaces / DNS over TLS
+    interface: 0.0.0.0@{TLS_PORT}
+    interface: ::@{TLS_PORT}
+    tls-port: {TLS_PORT}
+
+	tls-service-pem: "{TLS_SERVICE_PEM}"
+    tls-service-key: "{TLS_SERVICE_KEY}"
+
 	do-ip4: yes
 	do-ip6: yes
 	do-udp: yes
