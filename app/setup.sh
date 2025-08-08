@@ -7,7 +7,7 @@ TLS_PORT="${TLS_PORT:-853}"
 
 # Conf
 TEMPLATE="/template-conf/unbound.conf.template"
-CONF="/etc/unbound/unbound.conf"
+CONF="/etc/unbound/unbound.conf.d/unbound.conf"
 
 TLS_DIR="/etc/unbound/ssl"
 TLS_SERVICE_PEM="${TLS_SERVICE_PEM:-$TLS_DIR/unbound_tls.crt}"
