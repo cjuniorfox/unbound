@@ -36,7 +36,6 @@ else
   echo "[INFO] Using provided TLS key: $TLS_SERVICE_KEY"
 fi
 
-
 # Process template configs
 sed -e "s|{PORT}|${PORT}|g" \
     -e "s|{TLS_PORT}|${TLS_PORT}|g" \
@@ -54,24 +53,5 @@ sed -e "s|{PORT}|${PORT}|g" \
 
 # Setup control certificates
 unbound-control-setup
-
-# Download OPNsense helper scripts
-mkdir -p /usr/local/opnsense/site-python/watchers
-cd /usr/local/opnsense/site-python/
-
-echo "[INFO] Download requirement files for DHCP Watcher"
-for i in __init__.py daemonize.LICENSE daemonize.py duckdb_helper.py log_helper.py params.py sqlite3_helper.py; do 
-  LINK="https://raw.githubusercontent.com/opnsense/core/master/src/opnsense/site-python/$i"
-  echo "[INFO] Downloading: $LINK"
-  wget -q "$LINK"
-done
-
-echo "[INFO] Download watcher for DHCP_WATCHER"
-cd watchers/
-for i in __init__.py dhcpd.py; do
-  LINK="https://raw.githubusercontent.com/opnsense/core/master/src/opnsense/site-python/watchers/$i"
-  echo "[INFO] Downloading: $LINK"
-  wget -q "$LINK"
-done
 
 echo "[INFO] Setup complete."
