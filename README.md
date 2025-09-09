@@ -11,6 +11,7 @@ This repository contains the necessary files to build and run an Unbound DNS ser
     - [Create the Pod and Network](#1-create-the-pod-and-network)
     - [Run the Container](#2-run-the-container)
     - [Notes about DHCPSERVER](#notes-about-dhcpserver)
+    - [Variables](#variables)
     - [IPv6 Name Resolution](#ipv6-name-resolution)
 - [TLS Support (DNS-over-TLS)](#tls-support-dns-over-tls)
 - [Firewall Configuration (Optional)](#firewall-configuration-optional)
@@ -101,6 +102,8 @@ podman run -d \
     cjuniorfox/unbound:1.20.0 
 ```
 
+### Variables
+
 - **PORT** the port were Unbound will serve. The default value is 53. Useful when using `network=host`.
 - **DOMAIN** is the domain defined as the `search domains`.
 - **DHCPSERVER** is the name of the DHCP server. It is used to retrieve DHCP leases. Can be:
@@ -109,6 +112,15 @@ podman run -d \
   - `kea`
   - `dnsmasq`
   - `systemd-networkd`
+- **TLS_PORT**: The port where Unbound will serve DNS-over-TLS (DoT). Default is `853`.
+- **TLS_SERVICE_PEM**: Path to the TLS certificate file used for DNS-over-TLS. Default is `/etc/unbound/ssl/unbound_tls.crt`.
+- **TLS_SERVICE_KEY**: Path to the TLS private key file used for DNS-over-TLS. Default is `/etc/unbound/ssl/unbound_tls.key`.
+- **INTERFACE_IP4**: IPv4 address/interface Unbound will listen on for standard DNS. Default is `0.0.0.0`.
+- **INTERFACE_IP6**: IPv6 address/interface Unbound will listen on for standard DNS. Default is `::`.
+- **INTERFACE_TLS_IP4**: IPv4 address/interface Unbound will listen on for DNS-over-TLS. Default is `0.0.0.0`.
+- **INTERFACE_TLS_IP6**: IPv6 address/interface Unbound will listen on for DNS-over-TLS. Default is `::`.
+- **ACCESS_CONTROL_IP4**: IPv4 access control list (ACL) for Unbound. Default is `0.0.0.0/0` (allow all).
+- **ACCESS_CONTROL_IP6**: IPv6 access control list (ACL) for Unbound. Default is `::/0` (allow all). 
 
 ### Notes about DHCPSERVER
 

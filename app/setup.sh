@@ -5,6 +5,15 @@ set -e
 PORT="${PORT:-53}"
 TLS_PORT="${TLS_PORT:-853}"
 
+ACCESS_CONTROL_IP4="${ACCESS_CONTROL_IP4:-0.0.0.0/0}"
+ACCESS_CONTROL_IP6="${ACCESS_CONTROL_IP6:-::/0}"
+
+INTERFACE_IP4=${INTERFACE_IP4:-0.0.0.0/0}
+INTERFACE_IP6=${INTERFACE_IP6:-::/0}
+
+INTERFACE_TLS_IP4=${INTERFACE_TLS_IP4:-0.0.0.0}
+INTERFACE_TLS_IP6=${INTERFACE_TLS_IP6:-::}
+
 # Conf
 TEMPLATE="/template-conf/unbound.conf.template"
 CONF="/etc/unbound/unbound.conf.d/unbound.conf"
@@ -31,6 +40,14 @@ fi
 # Process template configs
 sed -e "s|{PORT}|${PORT}|g" \
     -e "s|{TLS_PORT}|${TLS_PORT}|g" \
+    -e "s|{ACCESS_CONTROL_IP4}|${ACCESS_CONTROL_IP4}|g" \
+    -e "s|{ACCESS_CONTROL_IP6}|${ACCESS_CONTROL_IP6}|g" \
+    -e "s|{ACCESS_CONTROL_TLS_IP4}|${ACCESS_CONTROL_TLS_IP4}|g" \
+    -e "s|{ACCESS_CONTROL_TLS_IP6}|${ACCESS_CONTROL_TLS_IP6}|g" \
+    -e "s|{INTERFACE_IP4}|${INTERFACE_IP4}|g" \
+    -e "s|{INTERFACE_IP6}|${INTERFACE_IP6}|g" \
+    -e "s|{INTERFACE_TLS_IP4}|${INTERFACE_TLS_IP4}|g" \
+    -e "s|{INTERFACE_TLS_IP6}|${INTERFACE_TLS_IP6}|g" \
     -e "s|{TLS_SERVICE_PEM}|${TLS_SERVICE_PEM}|g" \
     -e "s|{TLS_SERVICE_KEY}|${TLS_SERVICE_KEY}|g" \
     "$TEMPLATE" > "$CONF"

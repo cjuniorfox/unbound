@@ -1,10 +1,17 @@
 server:
 	trust-anchor-file: "/usr/share/dnssec-root/trusted-key.key"
 
-	interface: 0.0.0.0
-	interface: ::
+	interface: {INTERFACE_IP4}@{PORT}
+	interface: {INTERFACE_IP6}@{PORT}
 	port: {PORT}
+
+	interface: {INTERFACE_TLS_IP4}@{TLS_PORT}
+	interface: {INTERFACE_TLS_IP6}@{TLS_PORT}
 	tls-port: {TLS_PORT}
+	
+    # ACL
+    access-control: {ACCESS_CONTROL_IP4} allow
+    access-control: {ACCESS_CONTROL_IP6} allow
 
 	tls-service-pem: "{TLS_SERVICE_PEM}"
 	tls-service-key: "{TLS_SERVICE_KEY}"
