@@ -1,15 +1,32 @@
-FROM alpine:3.21
+FROM alpine:3.21 AS unbound-base
 
 # Install unbound and dependencies
 RUN apk add --update bind-tools openssl py-daemonize py-watchdog python3 supervisor unbound wget \
     && rm -rf /var/cache/apk/* \
-    && mkdir -p /etc/unbound/unbound.conf.d /scripts /dhcp_watcher /template_conf
+    && mkdir -p /etc/unbound/unbound.conf.d /scripts /dhcp_watcher /template-conf
 
 ENV DOMAIN=home
-ENV PORT=53
-# The TLS port is not being used at the default conf. Just for documentation purpose
-ENV TLS_PORT=853
 ENV DHCP_LOG_LEVEL=INFO
+
+FROM unbound-base AS unbound-dhcp-watcher
+
+RUN mkdir -p /usr/local/opnsense/site-python/watchers && \
+    cd /usr/local/opnsense/site-python/ && \
+    echo "[INFO] Download requirement files for DHCP Watcher" && \
+    for i in __init__.py daemonize.LICENSE daemonize.py duckdb_helper.py log_helper.py params.py sqlite3_helper.py; do \
+      LINK="https://raw.githubusercontent.com/opnsense/core/master/src/opnsense/site-python/$i"; \
+      echo "[INFO] Downloading: $LINK"; \
+      wget -q "$LINK"; \
+    done && \
+    echo "[INFO] Download watcher for DHCP_WATCHER" && \
+    cd watchers/ && \
+    for i in __init__.py dhcpd.py; do \
+      LINK="https://raw.githubusercontent.com/opnsense/core/master/src/opnsense/site-python/watchers/$i"; \
+      echo "[INFO] Downloading: $LINK"; \
+      wget -q "$LINK"; \
+    done
+
+FROM unbound-dhcp-watcher
 
 VOLUME ["/unbound-conf/"]
 

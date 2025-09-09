@@ -1,25 +1,21 @@
 server:
 	trust-anchor-file: "/usr/share/dnssec-root/trusted-key.key"
-	access-control: 0.0.0.0/0 allow
-	access-control: ::/0 allow
 
-	interface: 0.0.0.0@{PORT}
-	interface: ::@{PORT}
+	interface: {INTERFACE_IP4}@{PORT}
+	interface: {INTERFACE_IP6}@{PORT}
 	port: {PORT}
 
-	#TLS
-	# Interfaces / DNS over TLS
-	interface: 0.0.0.0@{TLS_PORT}
-	interface: ::@{TLS_PORT}
+	interface: {INTERFACE_TLS_IP4}@{TLS_PORT}
+	interface: {INTERFACE_TLS_IP6}@{TLS_PORT}
 	tls-port: {TLS_PORT}
+	
+    # ACL
+    access-control: {ACCESS_CONTROL_IP4} allow
+    access-control: {ACCESS_CONTROL_IP6} allow
 
 	tls-service-pem: "{TLS_SERVICE_PEM}"
 	tls-service-key: "{TLS_SERVICE_KEY}"
 
-	do-ip4: yes
-	do-ip6: yes
-	do-udp: yes
-	do-tcp: yes
 	tls-cert-bundle: "/etc/ssl/certs/ca-certificates.crt"
 
 python:
