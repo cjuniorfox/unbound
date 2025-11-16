@@ -12,6 +12,7 @@ from datetime import timedelta
 sys.path.insert(0, "/usr/local/opnsense/site-python")
 from daemonize import Daemonize
 
+UNBOUND_CONTROL_PATH = None
 KEA_LEASES_FILE = '/var/lib/kea/dhcp4.leases'
 DEFAULT_DOMAIN = 'lan'
 CLEANUP_INTERVAL = 60  # seconds
