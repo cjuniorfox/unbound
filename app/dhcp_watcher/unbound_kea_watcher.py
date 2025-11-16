@@ -7,6 +7,7 @@ import syslog
 import argparse
 import csv
 import logging
+import shutil
 from datetime import timedelta
 sys.path.insert(0, "/usr/local/opnsense/site-python")
 from daemonize import Daemonize
@@ -34,13 +35,52 @@ class UnboundLocalData:
             del self.data[address]
             logger.debug(f"Removed address {address} with FQDN {fqdn} from UnboundLocalData")
 
+def find_unbound_control():
+    """Find the unbound-control binary in common locations"""
+    global UNBOUND_CONTROL_PATH
+    
+    if UNBOUND_CONTROL_PATH:
+        return UNBOUND_CONTROL_PATH
+    
+    # Common paths where unbound-control might be located
+    common_paths = [
+        '/usr/sbin/unbound-control',
+        '/sbin/unbound-control', 
+        '/usr/local/sbin/unbound-control',
+        '/usr/bin/unbound-control',
+        '/bin/unbound-control'
+    ]
+    
+    # First try using 'which' command
+    try:
+        UNBOUND_CONTROL_PATH = shutil.which('unbound-control')
+        if UNBOUND_CONTROL_PATH:
+            logger.debug(f"Found unbound-control using which: {UNBOUND_CONTROL_PATH}")
+            return UNBOUND_CONTROL_PATH
+    except Exception as e:
+        logger.debug(f"Error using which: {e}")
+    
+    # Fallback to checking common paths
+    for path in common_paths:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            UNBOUND_CONTROL_PATH = path
+            logger.debug(f"Found unbound-control at: {UNBOUND_CONTROL_PATH}")
+            return UNBOUND_CONTROL_PATH
+    
+    raise FileNotFoundError("unbound-control binary not found in common locations")
+
 def unbound_control(commands, input=None):
     """ Execute unbound-control command """
+    try:
+        unbound_control_path = find_unbound_control()
+    except FileNotFoundError as e:
+        logger.error(f"Cannot find unbound-control: {e}")
+        return
     input_string = None
     if input:
         input_string = '\n'.join(input) + '\n'
     logger.debug(f"Executing unbound-control command: {commands}")
-    result = subprocess.run(['/usr/sbin/unbound-control'] + commands, input=input_string, text=True, capture_output=True)
+    result = subprocess.run([unbound_control_path] + commands, input=input_string, text=True, capture_output=True)
     logger.debug(f"unbound-control output: {result.stdout}")
     if result.stderr:
         logger.error(f"unbound-control error: {result.stderr}")
