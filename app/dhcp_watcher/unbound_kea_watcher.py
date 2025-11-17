@@ -70,7 +70,7 @@ def find_unbound_control():
     
     raise FileNotFoundError("unbound-control binary not found in common locations")
 
-def unbound_control(commands, input=None, server=None, cert_dir=None):
+def unbound_control(commands, input=None, server=None, config_file=None):
     """ Execute unbound-control command """
     try:
         unbound_control_path = find_unbound_control()
@@ -78,25 +78,16 @@ def unbound_control(commands, input=None, server=None, cert_dir=None):
         logger.error(f"Cannot find unbound-control: {e}")
         return
     
-    # Build command with optional server specification and certificates
+    # Build command with optional server specification and config file
     cmd = [unbound_control_path]
+    
+    # Add config file if provided
+    if config_file and os.path.exists(config_file):
+        cmd.extend(['-c', config_file])
     
     # Add server specification (IP:port)
     if server:
         cmd.extend(['-s', server])
-    
-    # Add certificate files if provided
-    if cert_dir:
-        server_cert = os.path.join(cert_dir, 'unbound_server.pem')
-        control_key = os.path.join(cert_dir, 'unbound_control.key')
-        control_cert = os.path.join(cert_dir, 'unbound_control.pem')
-        
-        if os.path.exists(server_cert):
-            cmd.extend(['-c', server_cert])
-        if os.path.exists(control_key):
-            cmd.extend(['-k', control_key])
-        if os.path.exists(control_cert):
-            cmd.extend(['-p', control_cert])
     
     cmd.extend(commands)
 
@@ -129,7 +120,7 @@ def parse_kea_leases(leases_file):
         logger.warning(f"Leases file not found: {leases_file}")
     return leases
 
-def run_watcher(target_filename, default_domain, watch_file, unbound_server=None, cert_dir=None):
+def run_watcher(target_filename, default_domain, watch_file, unbound_server=None, config_file=None):
     logger.info(f"Starting watcher with target_filename={target_filename}, default_domain={default_domain}, watch_file={watch_file}")
     unbound_local_data = UnboundLocalData()
     cached_leases = {}
@@ -185,10 +176,10 @@ def run_watcher(target_filename, default_domain, watch_file, unbound_server=None
         if dhcpd_changed:
             if remove_rr:
                 logger.info(f"Removing {len(remove_rr)} resource records")
-                unbound_control(['local_datas_remove'], input=remove_rr, server=unbound_server, cert_dir=cert_dir)
+                unbound_control(['local_datas_remove'], input=remove_rr, server=unbound_server, config_file=config_file)
             if add_rr:
                 logger.info(f"Adding {len(add_rr)} resource records")
-                unbound_control(['local_datas'], input=add_rr, server=unbound_server, cert_dir=cert_dir)
+                unbound_control(['local_datas'], input=add_rr, server=unbound_server, config_file=config_file)
         # Sleep before next check
         time.sleep(5)
 
@@ -201,7 +192,7 @@ if __name__ == '__main__':
     parser.add_argument('--foreground', help='run in foreground', default=False, action='store_true')
     parser.add_argument('--log-level', help='set the logging level', default='INFO', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'])
     parser.add_argument('--unbound-server', help='unbound server to connect to (IP:port)', default=None)
-    parser.add_argument('--cert-dir', help='directory containing unbound certificates', default=None)
+    parser.add_argument('--config-file', help='unbound config file path', default=None)
     inputargs = parser.parse_args()
 
     # Set the logging level based on the argument
@@ -212,12 +203,12 @@ if __name__ == '__main__':
     if inputargs.foreground:
         logger.info("Running in foreground mode")
         run_watcher(target_filename=inputargs.target, default_domain=inputargs.domain, watch_file=inputargs.source, 
-                   unbound_server=inputargs.unbound_server, cert_dir=inputargs.cert_dir)
+                   unbound_server=inputargs.unbound_server, config_file=inputargs.config_file)
     else:
         logger.info("Running in daemon mode")
         syslog.syslog(syslog.LOG_NOTICE, 'daemonize unbound kea watcher.')
         cmd = lambda: run_watcher(target_filename=inputargs.target, default_domain=inputargs.domain, 
                                  watch_file=inputargs.source, unbound_server=inputargs.unbound_server, 
-                                 cert_dir=inputargs.cert_dir)
+                                 config_file=inputargs.config_file)
         daemon = Daemonize(app="unbound_kea_watcher", pid=inputargs.pid, action=cmd)
         daemon.start()
